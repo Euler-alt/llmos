@@ -1,0 +1,86 @@
+{
+  "module": "HeapPromptModule",
+  "description": "Heap 模块管理一个全局键值存储（key-value heap），用于保存 LLM 推理中需要持久化或跨帧访问的数据。",
+  "call_type": "heap",
+  "functions": [
+    {
+      "name": "heap_set",
+      "description": "设置堆中指定 key 的值。",
+      "parameters": {
+        "key": "string (必选, 键名)",
+        "value": "any JSON-serializable type (必选, 要存储的值)"
+      },
+      "return": {
+        "success": {"status": "ok", "key": "username", "value": "Alice"},
+        "error": {"status": "error", "reason": "key or value missing"}
+      },
+      "example_call": {
+        "call_type": "heap",
+        "func_name": "heap_set",
+        "kwargs": {"key": "username", "value": "Alice"}
+      }
+    },
+    {
+      "name": "heap_get",
+      "description": "读取堆中指定 key 的值。",
+      "parameters": {
+        "key": "string (必选, 键名)"
+      },
+      "return": {
+        "success": {"status": "ok", "key": "username", "value": "Alice"},
+        "error": {"status": "error", "reason": "key missing"}
+      },
+      "example_call": {
+        "call_type": "heap",
+        "func_name": "heap_get",
+        "kwargs": {"key": "username"}
+      }
+    },
+    {
+      "name": "heap_delete",
+      "description": "删除堆中指定 key 的值。",
+      "parameters": {
+        "key": "string (必选, 键名)"
+      },
+      "return": {
+        "success": {"status": "ok", "key": "username"},
+        "error": {"status": "error", "reason": "key 'username' not found"}
+      },
+      "example_call": {
+        "call_type": "heap",
+        "func_name": "heap_delete",
+        "kwargs": {"key": "username"}
+      }
+    }
+  ],
+  "forward_format": {
+    "description": "<description from heap_description.txt>",
+    "heap_data": {
+      "example": {
+        "key1": "value1",
+        "key2": {"subkey": 123}
+      },
+      "note": "当堆为空时，仅输出 description 和 '### HEAP DATA ###' 标记"
+    }
+  },
+  "usage_examples": [
+    {
+      "action": "设置键值",
+      "call": {"call_type": "heap", "func_name": "heap_set", "kwargs": {"key": "username", "value": "Alice"}}
+    },
+    {
+      "action": "读取键值",
+      "call": {"call_type": "heap", "func_name": "heap_get", "kwargs": {"key": "username"}}
+    },
+    {
+      "action": "删除键值",
+      "call": {"call_type": "heap", "func_name": "heap_delete", "kwargs": {"key": "username"}}
+    }
+  ],
+  "notes": [
+    "所有返回结果都包含 'status' 字段（'ok' 或 'error'），便于上层调度器断言。",
+    "key 必须为字符串；value 应为 JSON 可序列化类型。",
+    "推荐使用 JSON 调用而非方括号简写，以避免复杂值解析错误。",
+    "forward() 输出可直接拼入 LLM 提示词，便于 LLM 读取当前堆状态。"
+  ]
+}

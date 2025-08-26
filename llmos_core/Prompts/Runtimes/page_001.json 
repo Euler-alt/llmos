@@ -1,0 +1,17 @@
+{
+    "page_id": "P1",
+    "token_count": 1250,
+    "last_accessed": "2023-08-18T15:22:00Z",
+    "content": [
+        {
+            "type": "task",
+            "id": "T3",
+            "status": "in_progress",
+            "desc": "文献作者信息提取"
+        },
+        {
+            "type": "note",
+            "text": "用户偏好：优先提取第一作者单位"
+        }
+    ]
+}
