@@ -36,7 +36,7 @@ def parse_response(response:str):
 class PromptMainBoard:
     def __init__(self, code_file=None):
         """
-        :param modules: 一个字典，key 是模块名，value 是模块实例
+        :param code_file:代码段文件
         """
         self.system_modules = SystemPromptModule(code_file=code_file)
         self.modules = [self.system_modules]
@@ -69,5 +69,6 @@ class PromptMainBoard:
         return self.assemble_prompt()
 
 
-
+    def get_snap_shot(self):
+        return self.system_modules.get_snapshot()
 

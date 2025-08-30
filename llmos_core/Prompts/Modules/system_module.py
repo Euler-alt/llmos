@@ -26,3 +26,11 @@ class SystemPromptModule(BasePromptModule):
         for module in self.Modules:
             handlers.update(module.export_handlers() or {})
         return handlers
+
+    def get_snapshot(self):
+        return {
+            "stack": str(self.stackModule.forward()),
+            "heap": str(self.heapModule.forward()),
+            "code": self.codeModule.forward(),
+            "kernel": self.kernelModule.forward(),
+        }
