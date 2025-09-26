@@ -1,7 +1,7 @@
 {
   "module": "HeapPromptModule",
   "description": "Heap 模块管理一个全局键值存储（key-value heap），用于保存 LLM 推理中需要持久化或跨帧访问的数据。",
-  "call_type": "heap",
+  "call_type": "prompt",
   "functions": [
     {
       "name": "heap_set",
@@ -15,25 +15,9 @@
         "error": {"status": "error", "reason": "key or value missing"}
       },
       "example_call": {
-        "call_type": "heap",
+        "call_type": "prompt",
         "func_name": "heap_set",
         "kwargs": {"key": "username", "value": "Alice"}
-      }
-    },
-    {
-      "name": "heap_get",
-      "description": "读取堆中指定 key 的值。",
-      "parameters": {
-        "key": "string (必选, 键名)"
-      },
-      "return": {
-        "success": {"status": "ok", "key": "username", "value": "Alice"},
-        "error": {"status": "error", "reason": "key missing"}
-      },
-      "example_call": {
-        "call_type": "heap",
-        "func_name": "heap_get",
-        "kwargs": {"key": "username"}
       }
     },
     {
@@ -47,7 +31,7 @@
         "error": {"status": "error", "reason": "key 'username' not found"}
       },
       "example_call": {
-        "call_type": "heap",
+        "call_type": "prompt",
         "func_name": "heap_delete",
         "kwargs": {"key": "username"}
       }
@@ -66,15 +50,11 @@
   "usage_examples": [
     {
       "action": "设置键值",
-      "call": {"call_type": "heap", "func_name": "heap_set", "kwargs": {"key": "username", "value": "Alice"}}
-    },
-    {
-      "action": "读取键值",
-      "call": {"call_type": "heap", "func_name": "heap_get", "kwargs": {"key": "username"}}
+      "call": {"call_type": "prompt", "func_name": "heap_set", "kwargs": {"key": "username", "value": "Alice"}}
     },
     {
       "action": "删除键值",
-      "call": {"call_type": "heap", "func_name": "heap_delete", "kwargs": {"key": "username"}}
+      "call": {"call_type": "prompt", "func_name": "heap_delete", "kwargs": {"key": "username"}}
     }
   ],
   "notes": [

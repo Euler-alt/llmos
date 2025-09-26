@@ -1,7 +1,7 @@
 {
   "module": "StackPromptModule",
   "description": "Stack 模块管理一个函数式栈（stack of frames），每个帧记录 name、description、variables、fail_reason、content。LLM 通过调用函数与栈交互。",
-  "call_type": "stack",
+  "call_type": "prompt",
   "functions": [
     {
       "name": "stack_push",
@@ -16,7 +16,7 @@
         "error": {"status": "error", "reason": "invalid arguments"}
       },
       "example_call": {
-        "call_type": "stack",
+        "call_type": "prompt",
         "func_name": "stack_push",
         "kwargs": {"name": "plan_route", "description": "规划路线", "variables": {"city": "Tokyo"}}
       }
@@ -32,7 +32,7 @@
         "error": {"status": "error", "reason": "stack empty"}
       },
       "example_call": {
-        "call_type": "stack",
+        "call_type": "prompt",
         "func_name": "stack_pop",
         "kwargs": {"result": "finished"}
       }
@@ -48,7 +48,7 @@
         "error": {"status": "error", "reason": "no active frame"}
       },
       "example_call": {
-        "call_type": "stack",
+        "call_type": "prompt",
         "func_name": "stack_append",
         "kwargs": {"content": "找到候选A"}
       }
@@ -66,7 +66,7 @@
         "error": {"status": "error", "reason": "no active frame"}
       },
       "example_call": {
-        "call_type": "stack",
+        "call_type": "prompt",
         "func_name": "stack_replace",
         "kwargs": {"description": "重新规划路线", "variables": {"city": "Kyoto"}, "fail_reason": "路径不可行"}
       }
@@ -79,19 +79,19 @@
   "usage_examples": [
     {
       "action": "压入栈帧",
-      "call": {"call_type": "stack", "func_name": "stack_push", "kwargs": {"name": "plan_route", "description": "规划路线", "variables": {"city": "Tokyo"}}}
+      "call": {"call_type": "prompt", "func_name": "stack_push", "kwargs": {"name": "plan_route", "description": "规划路线", "variables": {"city": "Tokyo"}}}
     },
     {
       "action": "追加日志",
-      "call": {"call_type": "stack", "func_name": "stack_append", "kwargs": {"content": "找到候选A"}}
+      "call": {"call_type": "prompt", "func_name": "stack_append", "kwargs": {"content": "找到候选A"}}
     },
     {
       "action": "替换帧信息",
-      "call": {"call_type": "stack", "func_name": "stack_replace", "kwargs": {"description": "重新规划路线", "variables": {"city": "Kyoto"}, "fail_reason": "路径不可行"}}
+      "call": {"call_type": "prompt", "func_name": "stack_replace", "kwargs": {"description": "重新规划路线", "variables": {"city": "Kyoto"}, "fail_reason": "路径不可行"}}
     },
     {
       "action": "弹出栈帧",
-      "call": {"call_type": "stack", "func_name": "stack_pop", "kwargs": {"result": "成功找到最优路径"}}
+      "call": {"call_type": "prompt", "func_name": "stack_pop", "kwargs": {"result": "成功找到最优路径"}}
     }
   ],
   "notes": [

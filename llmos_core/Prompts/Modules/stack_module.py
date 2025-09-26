@@ -8,7 +8,7 @@ class StackPromptModule(BasePromptModule):
     def __init__(self,name='stack'):
         super().__init__()
         self.name = name
-        self.file_path = Path(__file__).parent / 'texts' / 'stack_description.txt'
+        self.file_path = Path(__file__).parent / 'texts' / 'stack_description.json'
         with open(self.file_path,'r') as f:
             self.description = f.read()
         self.stack:List[Dict[str, Any]] = []
@@ -34,7 +34,7 @@ class StackPromptModule(BasePromptModule):
             return f"\n{self.description}\n### STACK EMPTY ###\n"
 
         # 栈非空时，把每帧用分隔符拼接
-        return f"\n{self.description}\n".join(parts)
+        return f"\n{self.description}\n### STACK DATA ###" + "\n".join(parts)
 
     def _stack_push(self,*args,**kwargs):
         frame = {

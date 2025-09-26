@@ -1,8 +1,15 @@
-import React from 'react';
+import React,{useState,useEffect} from 'react';
 
 const HeapModule = ({ data, onUpdate }) => {
-  return (
-    <div style={moduleStyle}>
+   const [isUpdated,setIsupdated] = useState(false);
+   useEffect(()=>{
+       if(!data) return;
+       setIsupdated(true);
+       const timer = setTimeout(()=>setIsupdated(false),500);
+       return ()=>clearTimeout(timer);
+   },[data])
+   return (
+    <div style={{...moduleStyle, backgroundColor: isUpdated ? '#ff8c00' : '#e6f3ff'}}>
       <h4>堆模块 (Heap)</h4>
       <textarea
         style={textAreaStyle}

@@ -1,8 +1,15 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 const StackModule = ({ data, onUpdate }) => {
+  const [isUpdated, setIsUpdated] = useState(false);
+  useEffect(() => {
+    if (!data) return;
+    setIsUpdated(true);
+    const timer = setTimeout(() => setIsUpdated(false), 500); // 500ms 后消失
+    return () => clearTimeout(timer);
+  }, [data]);
   return (
-    <div style={moduleStyle}>
+    <div style={{...moduleStyle, backgroundColor: isUpdated ? '#ff8c00' : '#fffbe6' }}>
       <h4>栈模块 (Stack)</h4>
       <textarea
         style={textAreaStyle}

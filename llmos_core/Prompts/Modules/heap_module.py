@@ -7,7 +7,7 @@ class HeapPromptModule(BasePromptModule):
     def __init__(self, name="heap"):
         super().__init__()
         self.name = name
-        self.file_path = Path(__file__).parent / 'texts' / 'heap_description.txt'
+        self.file_path = Path(__file__).parent / 'texts' / 'heap_description.json'
         with open(self.file_path,'r') as f:
             self.description = f.read()
         # 堆的核心数据结构，一个全局字典
@@ -20,7 +20,10 @@ class HeapPromptModule(BasePromptModule):
 
         # 序列化为可读的 JSON 格式
         heap_data_str = json.dumps(self.data, indent=2, ensure_ascii=False)
-        return f"\n{self.description}\n### HEAP DATA ###\n{heap_data_str}\n"
+        if heap_data_str:
+            return f"\n{self.description}\n### HEAP DATA ###\n{heap_data_str}\n"
+        else:
+            return f"\n{self.description}\n### HEAP EMPTY ###\n"
 
     def _heap_set(self,*args,**kwargs):
         key = kwargs.get("key")

@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import random
-
+from pathlib import Path
 from context_program import ContextProgram
 # 初始化 FastAPI 应用
 app = FastAPI()
@@ -40,9 +40,10 @@ class UpdateModule(BaseModel):
 
 # 新增一个异步任务来模拟后台程序的运行
 async def simulate_ai_process():
-    program = ContextProgram()
+    context_code = Path(__file__).parent / 'tests'/'prompt_code' / 'engage_agent.txt'
+    program = ContextProgram(context_code)
     while True:
-        await asyncio.sleep(random.uniform(1, 3))  # 随机等待1-3秒
+        await asyncio.sleep(random.uniform(1, 1.5))  # 随机等待
 
         data = program.run()
         for key in module_data:

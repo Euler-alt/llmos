@@ -4,7 +4,7 @@ from pathlib import Path
 class StaticPromptModule(BasePromptModule):
     def __init__(self, file_path=None):
         super().__init__()
-        self.file_path = file_path or Path(__file__).parent / 'texts' / 'kernel_description.txt'
+        self.file_path = file_path or Path(__file__).parent / 'texts' / 'kernel_description.json'
         with open(self.file_path) as f:
             self.content = f.read()
 
