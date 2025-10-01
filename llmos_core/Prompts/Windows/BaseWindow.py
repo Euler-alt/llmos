@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-class BasePromptModule(ABC):
+class BasePromptWindow(ABC):
 
     def __init__(self):
         self.handlers = {}
@@ -9,7 +9,7 @@ class BasePromptModule(ABC):
     @abstractmethod
     def forward(self, *args, **kwargs):
         """根据当前状态，将提示词内容序列化为可用的字符串。"""
-        pass
+        return ""
 
     def handle_call(self, module_call:str, *args, **kwargs):
         """更新提示词模块的内容（比如由 LLM 生成的新规则）。"""
@@ -18,6 +18,11 @@ class BasePromptModule(ABC):
         else:
             raise NotImplementedError(f"Handler for {module_call} not found in {self.__class__.__name__}")
 
-    @abstractmethod
+    def export_meta_prompt(self)->str:
+        return ""
+
+    def export_state_prompt(self)->str:
+        return ""
+
     def export_handlers(self):
         return {}

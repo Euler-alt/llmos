@@ -1,8 +1,8 @@
-from .BaseModules import BasePromptModule
+from .BaseWindow import BasePromptWindow
 from pathlib import Path
 import json
 
-class HeapPromptModule(BasePromptModule):
+class HeapPromptWindow(BasePromptWindow):
 
     def __init__(self, name="heap"):
         super().__init__()
@@ -13,17 +13,19 @@ class HeapPromptModule(BasePromptModule):
         # 堆的核心数据结构，一个全局字典
         self.data = {}
 
-    def forward(self, context=None):
-        """将堆数据序列化成提示词，供 LLM 使用"""
-        if not self.data:
-            return f'\n{self.description}\n### HEAP DATA ###\n'
-
-        # 序列化为可读的 JSON 格式
+    def export_state_prompt(self):
         heap_data_str = json.dumps(self.data, indent=2, ensure_ascii=False)
         if heap_data_str:
-            return f"\n{self.description}\n### HEAP DATA ###\n{heap_data_str}\n"
+            return f"### HEAP DATA ###\n{heap_data_str}\n"
         else:
-            return f"\n{self.description}\n### HEAP EMPTY ###\n"
+            return "### HEAP Empty ###\n"
+
+    def export_meta_prompt(self):
+        return f'{self.description}\n'
+
+    def forward(self, context=None):
+        """将堆数据序列化成提示词，供 LLM 使用"""
+        return f"{self.export_meta_prompt()}{self.export_state_prompt()}"
 
     def _heap_set(self,*args,**kwargs):
         key = kwargs.get("key")

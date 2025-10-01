@@ -1,6 +1,6 @@
 import json
 import re
-from .Modules import SystemPromptModule,BasePromptModule
+from .Windows import SystemPromptWindow,BasePromptWindow
 
 def parse_response(response:str):
     """
@@ -38,7 +38,7 @@ class PromptMainBoard:
         """
         :param code_file:代码段文件
         """
-        self.system_modules = SystemPromptModule(code_file=code_file)
+        self.system_modules = SystemPromptWindow(code_file=code_file)
         self.modules = [self.system_modules]
         self.handlers = {}
         self.handlers.update(self.system_modules.export_handlers())
@@ -52,7 +52,7 @@ class PromptMainBoard:
             desc += module.forward()
         return desc
 
-    def extend_module(self,module:BasePromptModule):
+    def extend_module(self, module:BasePromptWindow):
         self.modules.append(module)
 
 
@@ -68,7 +68,9 @@ class PromptMainBoard:
         """
         return self.assemble_prompt()
 
+    def get_divide_snapshot(self):
+        return self.system_modules.get_divide_snapshot()
 
-    def get_snap_shot(self):
+    def get_snapshot(self):
         return self.system_modules.get_snapshot()
 

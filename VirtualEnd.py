@@ -92,9 +92,19 @@ async def call_llm(data: LLMPrompt):
     print(prompt[:50])  # 只打印前50个字符，避免太长
     result=program.run()
     for key in module_data:
-        if key in result:
-            module_data[key] = result[key]
+        if key in result["snapshot"]:
+            module_data[key] = result["snapshot"][key]
     await send_sse_update(module_data)
     answer = f"这是模拟 LLM 的响应，收到的 prompt 长度: {len(prompt)}"
+    print("finish a call")
+    return {
+        "answer": answer,
+        "raw_response": result["raw_response"],
+        "parsed_calls": result["parsed_calls"]
+    }
 
-    return {"answer": answer}
+if __name__ == "__main__":
+    import uvicorn
+
+    # 要运行此文件，请在终端中执行: uvicorn main:app --reload
+    uvicorn.run(app, host="0.0.0.0", port=3001)

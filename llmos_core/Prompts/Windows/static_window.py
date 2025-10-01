@@ -1,7 +1,8 @@
-from .BaseModules import BasePromptModule
+from .BaseWindow import BasePromptWindow
 from pathlib import Path
 
-class StaticPromptModule(BasePromptModule):
+class StaticPromptWindow(BasePromptWindow):
+
     def __init__(self, file_path=None):
         super().__init__()
         self.file_path = file_path or Path(__file__).parent / 'texts' / 'kernel_description.json'
@@ -21,10 +22,16 @@ class StaticPromptModule(BasePromptModule):
         return None
 
 # 示例：一个具体的提示词模块实现
-class KernelPromptModule(StaticPromptModule):
+class KernelPromptModule(StaticPromptWindow):
     def __init__(self, file_path=None):
         super().__init__(file_path)
 
-class CodePromptModule(StaticPromptModule):
+    def export_meta_prompt(self) ->str:
+        return self.content
+
+class CodePromptModule(StaticPromptWindow):
     def __init__(self, file_path=None):
         super().__init__(file_path)
+
+    def export_state_prompt(self) ->str:
+        return self.content

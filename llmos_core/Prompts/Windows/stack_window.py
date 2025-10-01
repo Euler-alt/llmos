@@ -1,9 +1,9 @@
-from .BaseModules import BasePromptModule
+from .BaseWindow import BasePromptWindow
 from pathlib import Path
 from typing import List,Dict,Any
 
 
-class StackPromptModule(BasePromptModule):
+class StackPromptWindow(BasePromptWindow):
 
     def __init__(self,name='stack'):
         super().__init__()
@@ -13,11 +13,15 @@ class StackPromptModule(BasePromptModule):
             self.description = f.read()
         self.stack:List[Dict[str, Any]] = []
 
-    def forward(self, context=None):
-        """将栈帧序列化成提示词字符串，供 LLM 使用"""
-        parts = []
 
-        for i, frame in enumerate(self.stack):
+    def export_state_prompt(self):
+        """栈帧数据部分"""
+
+        if not self.stack:
+            return "### STACK EMPTY ###\n"
+
+        def export_frame(frame, index=None):
+            """单帧 → 文本"""
             desc_lines = [f"Function {frame['name']}: {frame['description']}"]
             if frame.get("variables"):
                 desc_lines.append(f"Variables: {frame['variables']}")
@@ -25,16 +29,18 @@ class StackPromptModule(BasePromptModule):
                 desc_lines.append(f"[Previous failure: {frame['fail_reason']}]")
             if frame.get("content"):
                 desc_lines.append(frame['content'])
-            # 每帧使用统一分隔符拼接
-            frame_str = "\n".join(desc_lines)
-            parts.append(frame_str)
+            return "\n".join(desc_lines)
 
-        # 如果栈为空，返回描述 + 提示
-        if not parts:
-            return f"\n{self.description}\n### STACK EMPTY ###\n"
+        parts = [export_frame(frame, i) for i, frame in enumerate(self.stack)]
+        return "### STACK DATA ###\n" + "\n".join(parts)
 
-        # 栈非空时，把每帧用分隔符拼接
-        return f"\n{self.description}\n### STACK DATA ###" + "\n".join(parts)
+    def export_meta_prompt(self):
+        """栈描述部分"""
+        return f"{self.description}\n"
+
+    def forward(self, context=None):
+        """组合完整提示词"""
+        return f"\n{self.export_meta_prompt()}{self.export_state_prompt()}"
 
     def _stack_push(self,*args,**kwargs):
         frame = {
