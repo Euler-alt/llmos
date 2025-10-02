@@ -15,8 +15,8 @@ class ContextProgram:
         self.promptMainBoard = PromptMainBoard(code_file=code_file)
         self.llm_client = LLMClient()
 
-    def run(self,cache=True)->dict:
-        if cache:
+    def run(self, use_cache=True)->dict:
+        if use_cache:
             response = load_cache_result()
         else:
             full_prompt = self.promptMainBoard.assemble_prompt()

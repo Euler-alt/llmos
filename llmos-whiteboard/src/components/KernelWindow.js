@@ -2,9 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 
 const KernelWindow = ({ data, onUpdate, darkMode }) => {
   const [isUpdated, setIsUpdated] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(true);
-  const [showMeta, setShowMeta] = useState(true);
-  const [showState, setShowState] = useState(true);
+  const [activeTab, setActiveTab] = useState('meta');
+  const [isMaximized, setIsMaximized] = useState(false);
   const metaTextareaRef = useRef(null);
   const stateTextareaRef = useRef(null);
   const { meta, state } = data || {};
@@ -25,178 +24,153 @@ const KernelWindow = ({ data, onUpdate, darkMode }) => {
     });
   }, [data]);
   
+  const getTabClass = (tab) => {
+    const baseClass = "px-4 py-2 font-medium rounded-t-lg transition-colors duration-200";
+    const activeClass = darkMode 
+      ? "bg-gray-700 text-white border-b-2 border-blue-500" 
+      : "bg-white text-gray-800 border-b-2 border-blue-500";
+    const inactiveClass = darkMode 
+      ? "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-300" 
+      : "bg-gray-100 text-gray-600 hover:bg-gray-200";
+    
+    return `${baseClass} ${activeTab === tab ? activeClass : inactiveClass}`;
+  };
+  
   return (
-    <div className={`
-      rounded-xl overflow-hidden transition-all duration-300
-      ${darkMode ? 'bg-gray-800 text-gray-200' : 'bg-blue-50 text-gray-800'}
-      ${isUpdated ? (darkMode ? 'ring-2 ring-blue-500' : 'ring-2 ring-blue-400') : ''}
-      shadow-lg border ${darkMode ? 'border-gray-700' : 'border-blue-200'}
-    `}>
+    <div 
+      className={`
+        rounded-xl overflow-hidden transition-all duration-300
+        ${darkMode ? 'bg-gray-800 text-gray-200' : 'bg-blue-50 text-gray-800'}
+        ${isUpdated ? (darkMode ? 'ring-2 ring-blue-500' : 'ring-2 ring-blue-400') : ''}
+        shadow-lg border ${darkMode ? 'border-gray-700' : 'border-blue-200'}
+        ${isMaximized ? 'fixed z-50 !rounded-lg' : 'relative'}
+      `}
+      onDoubleClick={() => setIsMaximized(!isMaximized)}
+      style={isMaximized ? { 
+        position: 'fixed', 
+        top: '10%', 
+        left: '25%', 
+        right: '25%', 
+        bottom: '10%', 
+        zIndex: 50,
+        borderRadius: '0.5rem'
+      } : {}}
+    >
       {/* 主头部 */}
       <div className={`
         p-4 flex justify-between items-center
-        ${darkMode ? 'bg-blue-900 hover:bg-blue-800' : 'bg-blue-600 hover:bg-blue-500'} 
-        text-white transition-colors duration-200
+        ${darkMode ? 'bg-blue-900' : 'bg-blue-600'} text-white
       `}>
-        <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" style={{ width: '20px', height: '20px' }} viewBox="0 0 20 20" fill="currentColor">
+        <h3 className="text-lg font-medium flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" style={{ width: '20px', height: '20px' }} viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 010-1.414z" clipRule="evenodd" />
           </svg>
-          <div>
-            <h4 className="font-semibold text-lg">内核窗口 (Kernel)</h4>
-            <p className="text-blue-100 text-xs opacity-80">系统规则和工作流程</p>
-          </div>
-        </div>
+          内核窗口 (Kernel)
+        </h3>
+        
         <div className="flex items-center space-x-3">
-          {/* Meta 开关按钮 */}
-          <button 
-            className={`
-              p-2 rounded-full transition-all duration-200
-              ${showMeta 
-                ? (darkMode ? 'bg-green-600 hover:bg-green-500' : 'bg-green-500 hover:bg-green-400')
-                : (darkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-400 hover:bg-gray-300')
-              }
-            `}
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowMeta(!showMeta);
-            }}
-            title={showMeta ? "隐藏Meta信息" : "显示Meta信息"}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" style={{ width: '16px', height: '16px' }} viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-            </svg>
-          </button>
-          
-          {/* State 开关按钮 */}
-          <button 
-            className={`
-              p-2 rounded-full transition-all duration-200
-              ${showState 
-                ? (darkMode ? 'bg-purple-600 hover:bg-purple-500' : 'bg-purple-500 hover:bg-purple-400')
-                : (darkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-400 hover:bg-gray-300')
-              }
-            `}
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowState(!showState);
-            }}
-            title={showState ? "隐藏State信息" : "显示State信息"}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" style={{ width: '16px', height: '16px' }} viewBox="0 0 20 20" fill="currentColor">
-              <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
-            </svg>
-          </button>
-          
           <span className="text-xs bg-white bg-opacity-20 px-2 py-1 rounded-full font-medium">
-            {data?.length || 0} 字节
+            {(meta?.length || 0) + (state?.length || 0)} 字节
           </span>
-          <div className="cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 transition-transform duration-200" style={{ width: '20px', height: '20px' }} viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d={isExpanded ? "M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" : "M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"} clipRule="evenodd" />
+          <button 
+            className="p-2 rounded-full transition-all duration-200 hover:bg-white hover:bg-opacity-20"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsMaximized(!isMaximized);
+            }}
+            title={isMaximized ? "恢复窗口大小" : "最大化窗口"}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" style={{ width: '16px', height: '16px' }} viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d={isMaximized ? "M3 7a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 6a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" : "M3 4a1 1 0 011-1h12a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 1v10h10V5H5z"} clipRule="evenodd" />
             </svg>
-          </div>
+          </button>
         </div>
       </div>
       
-      {/* 可展开内容 */}
-      {isExpanded && (
-        <div className="space-y-4 p-4">
-          {/* Meta 信息子框 */}
+      {/* 标签页 */}
+      <div className="flex border-b border-gray-200 dark:border-gray-700">
+        <button 
+          className={getTabClass('meta')}
+          onClick={() => setActiveTab('meta')}
+        >
+          Meta 信息
+        </button>
+        <button 
+          className={getTabClass('state')}
+          onClick={() => setActiveTab('state')}
+        >
+          State 信息
+        </button>
+      </div>
+      
+      {/* 内容区域 */}
+      <div className="p-4">
+        {activeTab === 'meta' && (
           <div className={`
-            rounded-lg overflow-hidden border
-            ${darkMode ? 'border-gray-600 bg-gray-750' : 'border-blue-200 bg-blue-100'}
+            rounded border p-4 min-h-[200px] max-h-96 overflow-y-auto
+            ${darkMode 
+              ? 'bg-gray-700 border-gray-600 text-gray-200' 
+              : 'bg-gray-50 border-gray-200 text-gray-800'
+            }
           `}>
-            <div className={`
-              p-3 flex justify-between items-center cursor-pointer
-              ${darkMode ? 'bg-blue-800 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-400'}
-              text-white transition-colors duration-200
-            `} onClick={() => setShowMeta(!showMeta)}>
-              <div className="flex items-center space-x-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" style={{ width: '16px', height: '16px' }} viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                </svg>
-                <span className="font-medium">Meta 信息</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className="text-xs bg-white bg-opacity-20 px-2 py-1 rounded-full">
-                  {meta?.length || 0} 字符
-                </span>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 transition-transform duration-200" style={{ width: '16px', height: '16px' }} viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d={showMeta ? "M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" : "M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"} clipRule="evenodd" />
-                </svg>
-              </div>
-            </div>
-            
-            {showMeta && (
-              <div className="p-3">
-                <textarea
-                  ref={metaTextareaRef}
-                  className={`
-                    w-full p-3 rounded border font-mono text-sm resize-none
-                    focus:outline-none focus:ring-2 transition-colors duration-200
-                    ${darkMode 
-                      ? 'bg-gray-700 text-gray-200 border-gray-600 focus:ring-blue-500' 
-                      : 'bg-white text-gray-800 border-gray-300 focus:ring-blue-400'
-                    }
-                  `}
-                  value={meta || ''}
-                  onChange={(e) => onUpdate('kernel', { ...data, meta: e.target.value })}
-                  rows="3"
-                  placeholder="输入内核窗口的meta信息..."
-                />
-              </div>
-            )}
+            <textarea
+              ref={metaTextareaRef}
+              className={`
+                w-full p-3 rounded border font-mono text-sm resize-none
+                focus:outline-none focus:ring-2 transition-colors duration-200
+                ${darkMode 
+                  ? 'bg-gray-700 text-gray-200 border-gray-600 focus:ring-blue-500' 
+                  : 'bg-white text-gray-800 border-gray-300 focus:ring-blue-400'
+                }
+              `}
+              value={meta || ''}
+              onChange={(e) => onUpdate('kernel', { ...data, meta: e.target.value })}
+              rows="6"
+              placeholder="输入内核窗口的meta信息..."
+            />
           </div>
-
-          {/* State 信息子框 */}
+        )}
+        
+        {activeTab === 'state' && (
           <div className={`
-            rounded-lg overflow-hidden border
-            ${darkMode ? 'border-gray-600 bg-gray-750' : 'border-blue-200 bg-blue-100'}
+            rounded border p-4 min-h-[200px] max-h-96 overflow-y-auto
+            ${darkMode 
+              ? 'bg-gray-700 border-gray-600 text-gray-200' 
+              : 'bg-gray-50 border-gray-200 text-gray-800'
+            }
           `}>
-            <div className={`
-              p-3 flex justify-between items-center cursor-pointer
-              ${darkMode ? 'bg-blue-800 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-400'}
-              text-white transition-colors duration-200
-            `} onClick={() => setShowState(!showState)}>
-              <div className="flex items-center space-x-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" style={{ width: '16px', height: '16px' }} viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
-                </svg>
-                <span className="font-medium">State 信息</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className="text-xs bg-white bg-opacity-20 px-2 py-1 rounded-full">
-                  {state?.length || 0} 字符
-                </span>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 transition-transform duration-200" style={{ width: '16px', height: '16px' }} viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d={showState ? "M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" : "M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"} clipRule="evenodd" />
-                </svg>
-              </div>
-            </div>
-            
-            {showState && (
-              <div className="p-3">
-                <textarea
-                  ref={stateTextareaRef}
-                  className={`
-                    w-full p-3 rounded border font-mono text-sm resize-none
-                    focus:outline-none focus:ring-2 transition-colors duration-200
-                    ${darkMode 
-                      ? 'bg-gray-700 text-gray-200 border-gray-600 focus:ring-blue-500' 
-                      : 'bg-white text-gray-800 border-gray-300 focus:ring-blue-400'
-                    }
-                  `}
-                  value={state || ''}
-                  onChange={(e) => onUpdate('kernel', { ...data, state: e.target.value })}
-                  rows="4"
-                  placeholder="输入内核窗口的state信息..."
-                />
-              </div>
-            )}
+            <textarea
+              ref={stateTextareaRef}
+              className={`
+                w-full p-3 rounded border font-mono text-sm resize-none
+                focus:outline-none focus:ring-2 transition-colors duration-200
+                ${darkMode 
+                  ? 'bg-gray-700 text-gray-200 border-gray-600 focus:ring-blue-500' 
+                  : 'bg-white text-gray-800 border-gray-300 focus:ring-blue-400'
+                }
+              `}
+              value={state || ''}
+              onChange={(e) => onUpdate('kernel', { ...data, state: e.target.value })}
+              rows="8"
+              placeholder="输入内核窗口的state信息..."
+              spellCheck="false"
+            />
+          </div>
+        )}
+        
+        <div className="mt-3 flex justify-between text-sm">
+          <div>
+            <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
+              Meta: {meta?.length || 0} 字符
+            </span>
+          </div>
+          <div>
+            <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
+              State: {state?.length || 0} 字符
+            </span>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
