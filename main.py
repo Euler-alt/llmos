@@ -7,7 +7,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import random
 from pathlib import Path
-from context_program import ContextProgram
+from llmos_core.Program.context_program import ContextProgram
 # 初始化 FastAPI 应用
 app = FastAPI()
 

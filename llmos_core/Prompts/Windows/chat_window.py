@@ -1,6 +1,6 @@
 from BaseWindow import BasePromptWindow
 from pathlib import Path
-class UserInputWindow(BasePromptWindow):
+class ChatWindow(BasePromptWindow):
     def __init__(self,code_file=None):
         super().__init__()
         default_path = Path(__file__).parent / 'texts' / 'user_instruction.json'

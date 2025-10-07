@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from pydantic import BaseModel
 
-from context_program import ContextProgram
+from llmos_core.Program.context_program import ContextProgram
 
 app = FastAPI()
 

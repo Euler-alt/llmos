@@ -2,12 +2,11 @@ from .BaseWindow import BasePromptWindow
 from pathlib import Path
 from typing import List,Dict,Any
 
-
+@BasePromptWindow.register('stack','Stack')
 class StackPromptWindow(BasePromptWindow):
 
-    def __init__(self,name='stack'):
-        super().__init__()
-        self.name = name
+    def __init__(self, window_name='Stack'):
+        super().__init__(window_name=window_name)
         self.file_path = Path(__file__).parent / 'texts' / 'stack_description.json'
         with open(self.file_path,'r') as f:
             self.description = f.read()

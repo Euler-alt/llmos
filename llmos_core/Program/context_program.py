@@ -1,9 +1,10 @@
 from llmos_core.Prompts import PromptMainBoard,parse_response
 from llmos_core.llmos_util import LLMClient
+
 import yaml
 from pathlib import Path
 
-CACHE_FILE = Path('cache') / "cache.yaml"
+CACHE_FILE = Path('./cache') / "cache.yaml"
 def load_cache_result(result_path=None)->str:
     result_path = Path(result_path) if result_path else Path(CACHE_FILE)
     with open(result_path, "r") as f:
@@ -12,7 +13,8 @@ def load_cache_result(result_path=None)->str:
 
 class ContextProgram:
     def __init__(self,code_file=None):
-        self.promptMainBoard = PromptMainBoard(code_file=code_file)
+        self.promptMainBoard = PromptMainBoard()
+
         self.llm_client = LLMClient()
 
     def run(self, use_cache=True)->dict:

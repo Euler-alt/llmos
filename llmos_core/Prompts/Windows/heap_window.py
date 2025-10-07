@@ -2,11 +2,11 @@ from .BaseWindow import BasePromptWindow
 from pathlib import Path
 import json
 
+@BasePromptWindow.register('heap','Heap')
 class HeapPromptWindow(BasePromptWindow):
 
-    def __init__(self, name="heap"):
-        super().__init__()
-        self.name = name
+    def __init__(self, window_name="Heap"):
+        super().__init__(window_name=window_name)
         self.file_path = Path(__file__).parent / 'texts' / 'heap_description.json'
         with open(self.file_path,'r') as f:
             self.description = f.read()

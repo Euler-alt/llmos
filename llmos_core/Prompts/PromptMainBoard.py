@@ -1,6 +1,5 @@
 import json
 import re
-from .Windows import SystemPromptWindow,BasePromptWindow
 
 def parse_response(response:str):
     """
@@ -34,33 +33,29 @@ def parse_response(response:str):
 
 
 class PromptMainBoard:
-    def __init__(self, code_file=None):
-        """
-        :param code_file:代码段文件
-        """
-        self.system_modules = SystemPromptWindow(code_file=code_file)
-        self.modules = [self.system_modules]
-        self.handlers = {}
-        self.handlers.update(self.system_modules.export_handlers())
+    def __init__(self):
 
-    def assemble_prompt(self, context=None):
+        self.windows = []
+        self.handlers = {}
+
+    def assemble_prompt(self):
         """
         拼接所有模块的 forward() 输出
         """
-        desc =''
-        for module in self.modules:
-            desc += module.forward()
-        return desc
+        return "\n".join(m.forward() for m in self.windows)
 
-    def extend_module(self, module:BasePromptWindow):
-        self.modules.append(module)
+    def register_module(self, module):
+        """注册模块"""
+        self.windows.append(module)
+        self.handlers.update(module.export_handlers() or {})
 
 
     def handle_call(self, func_name: str, **kwargs):
-        """
-        内核调用入口，分发到对应的模块 handler
-        """
-        self.system_modules.handle_call(func_name, **kwargs)
+        """统一分发到对应窗口的 handler"""
+        if func_name in self.handlers:
+            return self.handlers[func_name](**kwargs)
+        else:
+            return {"status": "error", "reason": f"handler not found: {func_name}"}
 
     def show_state(self):
         """
@@ -69,8 +64,14 @@ class PromptMainBoard:
         return self.assemble_prompt()
 
     def get_divide_snapshot(self):
-        return self.system_modules.get_divide_snapshot()
+        divided_snap_shot = {}
+        for window in self.windows:
+            divided_snap_shot.update(window.get_divide_snapshot())
+        return divided_snap_shot
 
     def get_snapshot(self):
-        return self.system_modules.get_snapshot()
+        snapshot = {}
+        for window in self.windows:
+            snapshot.update(window.get_snapshot())
+        return snapshot
 
