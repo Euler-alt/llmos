@@ -1,23 +1,31 @@
-from llmos_core.Prompts import PromptMainBoard,parse_response
+from llmos_core.Prompts import PromptMainBoard, parse_response
 from llmos_core.llmos_util import LLMClient
-
+from llmos_core.Prompts.Windows import PromptWindow
 import yaml
 from pathlib import Path
 
 CACHE_FILE = Path('./cache') / "cache.yaml"
-def load_cache_result(result_path=None)->str:
+
+
+def load_cache_result(result_path=None) -> str:
     result_path = Path(result_path) if result_path else Path(CACHE_FILE)
     with open(result_path, "r") as f:
         result = yaml.safe_load(f)
     return result.get("result")
 
-class ContextProgram:
-    def __init__(self,code_file=None):
-        self.promptMainBoard = PromptMainBoard()
 
+class ContextProgram:
+    def __init__(self, code_file=None):
+        self.promptMainBoard = PromptMainBoard()
+        kernelPromptWindow = PromptWindow.from_name(PromptWindow.KernelPromptModule)
+        codePromptWindow = PromptWindow.from_name(PromptWindow.StackPromptWindow)
+        stackPromptWindow = PromptWindow.from_name(PromptWindow.StackPromptWindow)
+        heapPromptWindow = PromptWindow.from_name(PromptWindow.HeapPromptWindow)
+        windows = [kernelPromptWindow, codePromptWindow, stackPromptWindow, heapPromptWindow]
+        self.promptMainBoard.register_windows(windows)
         self.llm_client = LLMClient()
 
-    def run(self, use_cache=True)->dict:
+    def run(self, use_cache=True) -> dict:
         if use_cache:
             response = load_cache_result()
         else:
@@ -31,7 +39,7 @@ class ContextProgram:
                 func_name = call["func_name"]
                 kwargs = call["kwargs"]
                 if call_type.lower() == "prompt":
-                    self.promptMainBoard.handle_call(func_name,**kwargs)
+                    self.promptMainBoard.handle_call(func_name, **kwargs)
 
             return {
                 "snapshot": self.promptMainBoard.get_divide_snapshot(),
