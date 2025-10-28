@@ -1,0 +1,12 @@
+{
+    "call_type": "prompt",
+    "func_name": "stack_push",
+    "kwargs": {
+        "name": "find_pillow_and_desklamp",
+        "description": "Find the pillow and desklamp to complete the task: examine the pillow with the desklamp.",
+        "variables": {
+            "task": "examine the pillow with the desklamp",
+            "observed_objects": ["bed 1", "drawer 1-10", "dresser 1", "garbagecan 1", "shelf 1-7"]
+        }
+    }
+}

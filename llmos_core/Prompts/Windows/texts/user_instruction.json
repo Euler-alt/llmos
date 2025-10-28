@@ -1,0 +1,58 @@
+{
+  "module": "ChatWindow",
+  "description": "Chat 窗口模块用于与用户进行自然语言交互，维护对话历史记录，并向用户展示大模型输出。LLM 可调用本模块以发送消息给用户或接收来自用户的新输入。",
+  "call_type": "prompt",
+  "functions": [
+    {
+      "name": "user_response",
+      "description": "接收来自用户的新输入消息。一般由用户使用以注入prompt",
+      "parameters": {
+        "text": "string（必选，用户输入的文本内容）"
+      },
+      "return": {
+        "success": {"status": "ok", "messages": "更新后的对话历史"},
+        "error": {"status": "error", "reason": "invalid input"}
+      },
+      "example_call": {
+        "call_type": "prompt",
+        "func_name": "user_response",
+        "kwargs": {"text": "请继续解释强化学习的核心原理。"}
+      }
+    },
+    {
+      "name": "llm_response",
+      "description": "向用户发送一条大模型生成的回复消息。",
+      "parameters": {
+        "text": "string（必选，大模型的回复文本内容）"
+      },
+      "return": {
+        "success": {"status": "ok", "messages": "更新后的对话历史"},
+        "error": {"status": "error", "reason": "invalid output"}
+      },
+      "example_call": {
+        "call_type": "prompt",
+        "func_name": "llm_response",
+        "kwargs": {"text": "强化学习的核心思想是通过与环境交互学习最优策略。"}
+      }
+    }
+  ],
+  "forward_format": {
+    "description": "当 ChatWindow 的内容被拼接入总 prompt 时，会以如下格式呈现最近的对话历史。",
+    "format_example": "USER: 我想知道强化学习和监督学习的区别。\nASSISTANT: 强化学习关注行为选择与奖励反馈，而监督学习基于固定样本进行标签预测。"
+  },
+  "usage_examples": [
+    {
+      "action": "模型回复用户",
+      "call": {"call_type": "prompt", "func_name": "llm_response", "kwargs": {"text": "你的问题很棒，我们可以从策略梯度说起。"}}
+    },
+    {
+      "action": "用户发送消息",
+      "call": {"call_type": "prompt", "func_name": "user_response", "kwargs": {"text": "什么是策略梯度？"}}
+    }
+  ],
+  "notes": [
+    "ChatWindow 用于自然语言对话的输入输出。",
+    "请模型在生成回复时使用 llm_response 进行调用。",
+    "每轮对话后，历史记录会自动拼接进 prompt，以保持上下文连续性。"
+  ]
+}

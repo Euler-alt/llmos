@@ -8,6 +8,9 @@ from .system_window import (
     CodePromptModule
 )
 
+from .chat_window import ChatWindow,AsyChatPromptWindow
+from .ALFworldWindow import ALFworldWindow
+
 from enum import Enum
 
 
@@ -15,8 +18,11 @@ class PromptWindow(Enum):
     StackPromptWindow = 'stack'
     HeapPromptWindow = 'heap'
     SystemPromptWindow = 'system'
-    KernelPromptModule = 'kernel'
-    CodePromptModule = 'code'
+    KernelPromptWindow = 'kernel'
+    CodePromptWindow = 'code'
+    ALFworldWindow = 'alfworld'
+    ChatPromptWindow = 'ChatWindow'
+    AsyChatPromptWindow = 'AsyChatPromptWindow'
 
     # 关键修改：重写 __str__
     def __str__(self):

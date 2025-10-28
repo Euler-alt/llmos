@@ -1,5 +1,3 @@
-from shellingham.nt import kernel32
-
 from .BaseWindow import BasePromptWindow
 from pathlib import Path
 

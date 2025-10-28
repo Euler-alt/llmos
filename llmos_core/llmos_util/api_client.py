@@ -1,7 +1,7 @@
 from llmos_core.config_manager import ConfigManager
 from openai import OpenAI
 from pathlib import Path
-
+import asyncio
 
 class LLMClient:
     def __init__(self, model_name: str=None, specific_api_config_path=None):
@@ -27,7 +27,7 @@ class LLMClient:
         # 初始化 OpenAI 兼容客户端
         self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
 
-    def chat(self, user_prompt: str, system_prompt: str = "你是强化学习算法助手", temperature=0.7, max_tokens=2048) -> str:
+    def chat(self, user_prompt: str, system_prompt: str = "", temperature=0.7, max_tokens=2048) -> str:
         """
         执行一次聊天调用，使用初始化时设定的模型与连接信息。
         """
@@ -40,5 +40,21 @@ class LLMClient:
             temperature=temperature,
             max_tokens=max_tokens
         )
+        return response.choices[0].message.content
 
+
+    async def achat(self, user_prompt: str, system_prompt: str = "", temperature=0.7,
+             max_tokens=2048) -> str:
+        """
+        执行一次聊天调用，使用初始化时设定的模型与连接信息。
+        """
+        response = await self.client.chat.completions.create(
+            model=self.model_name,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=temperature,
+            max_tokens=max_tokens
+        )
         return response.choices[0].message.content

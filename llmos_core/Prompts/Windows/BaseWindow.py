@@ -18,7 +18,7 @@ class BasePromptWindow(ABC):
             for name in window_names:
                 # 无论是字符串还是 Enum 成员，str(name) 都能得到所需的字符串键
                 normalized_name = str(name)
-            cls.registered_windows[normalized_name] = subclass
+                cls.registered_windows[normalized_name] = subclass
             return subclass
         return decorator
 
@@ -26,8 +26,8 @@ class BasePromptWindow(ABC):
     def from_name(cls, name, **kwargs):
         normalized_name = str(name)
         if normalized_name not in cls.registered_windows:
-            raise ValueError(f"Window '{name}' not registered.")
-        return cls.registered_windows[name](**kwargs)
+            raise ValueError(f"Window '{normalized_name}' not registered.")
+        return cls.registered_windows[normalized_name](**kwargs)
 
     def handle_call(self, module_call:str, *args, **kwargs):
         """更新提示词模块的内容（比如由 LLM 生成的新规则）。"""

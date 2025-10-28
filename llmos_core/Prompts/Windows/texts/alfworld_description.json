@@ -1,0 +1,74 @@
+{
+  "module": "ALFWorldModule",
+  "description": "ALFWorld 模块提供了一个基于文本的具身智能体环境，代理可以在家庭环境中执行任务，通过动作与环境交互。",
+  "call_type": "prompt",
+  "functions": [
+    {
+      "name": "ALF_step",
+      "description": "在 ALFWorld 环境中执行一个动作，并返回新的观察、奖励和完成状态。",
+      "parameters": {
+        "action": "string (必选, 从可用动作列表中选择的命令)"
+      },
+      "return": {
+        "observation": "string (环境反馈)",
+        "reward": "float (奖励值)",
+        "done": "boolean (任务是否完成)",
+        "info": "dict (包含任务进度、库存等额外信息)"
+      },
+      "example_call": {
+        "call_type": "prompt",
+        "func_name": "ALF_step",
+        "kwargs": {"action": "go to kitchen"}
+      }
+    },
+    {
+      "name": "ALF_reset",
+      "description": "重置 ALFWorld 环境，开始新的任务。",
+      "parameters": {},
+      "return": {
+        "observation": "string (初始观察)",
+        "info": "dict (初始任务信息)"
+      },
+      "example_call": {
+        "call_type": "prompt",
+        "func_name": "ALF_reset",
+        "kwargs": {}
+      }
+    }
+  ],
+  "forward_format": {
+    "description": "[ENV MODULE: ALFWorld]\nYou are an embodied agent operating in a text-based environment.\nYou can perform actions by calling 'ALF_step(action=...)', where the action must be one of the available commands listed in the current state.\nEach step returns a new observation, a reward, and whether the task is done.\nThink carefully about the environment and plan your next move.",
+    "state_data": {
+      "structure": {
+        "Task": "当前任务描述",
+        "Observation": "环境反馈文本",
+        "Inventory": "携带物品列表",
+        "Available Actions": "可执行命令列表",
+        "Last Action": "上一个执行的动作",
+        "Last Reward": "上一个奖励值",
+        "Done": "任务是否完成",
+        "Won": "是否成功",
+        "Failed": "是否失败",
+        "Goal Progress": "任务进度百分比"
+      },
+      "note": "forward() 输出包含环境元提示和当前状态信息，供 LLM 决策参考"
+    }
+  },
+  "usage_examples": [
+    {
+      "action": "执行环境动作",
+      "call": {"call_type": "prompt", "func_name": "ALF_step", "kwargs": {"action": "take apple from table"}}
+    },
+    {
+      "action": "重置环境",
+      "call": {"call_type": "prompt", "func_name": "ALF_reset", "kwargs": {}}
+    }
+  ],
+  "notes": [
+    "动作必须从 'Available Actions' 列表中选择，否则环境可能拒绝执行。",
+    "每次 step 调用都会更新环境状态并返回新的观察结果。",
+    "当 done 为 True 时，任务结束，需要调用 reset 开始新任务。",
+    "reward 提供任务完成情况的即时反馈，可用于强化学习。",
+    "goal_progress 显示任务完成进度，有助于规划后续动作。"
+  ]
+}

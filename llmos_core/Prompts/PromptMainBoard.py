@@ -1,6 +1,6 @@
 import json
 import re
-
+from collections.abc import Iterable
 
 def parse_response(response: str):
     """
@@ -84,14 +84,10 @@ class PromptMainBoard:
         """
         return self.assemble_prompt()
 
-    def get_divide_snapshot(self):
+    def get_divided_snapshot(self):
         divided_snap_shot = {}
         for window in self.windows:
             divided_snap_shot.update(window.get_divide_snapshot())
         return divided_snap_shot
 
-    def get_snapshot(self):
-        snapshot = {}
-        for window in self.windows:
-            snapshot.update(window.get_snapshot())
-        return snapshot
+

@@ -1,31 +1,24 @@
+
 from llmos_core.Prompts import PromptMainBoard, parse_response
 from llmos_core.llmos_util import LLMClient
 from llmos_core.Prompts.Windows import PromptWindow
-import yaml
-from pathlib import Path
 
-CACHE_FILE = Path('./cache') / "cache.yaml"
+from .cache import load_cache_result
 
 
-def load_cache_result(result_path=None) -> str:
-    result_path = Path(result_path) if result_path else Path(CACHE_FILE)
-    with open(result_path, "r") as f:
-        result = yaml.safe_load(f)
-    return result.get("result")
 
-
-class ContextProgram:
-    def __init__(self, code_file=None):
-        self.promptMainBoard = PromptMainBoard()
-        kernelPromptWindow = PromptWindow.from_name(PromptWindow.KernelPromptWindow)
-        codePromptWindow = PromptWindow.from_name(PromptWindow.StackPromptWindow)
-        stackPromptWindow = PromptWindow.from_name(PromptWindow.StackPromptWindow)
-        heapPromptWindow = PromptWindow.from_name(PromptWindow.HeapPromptWindow)
-        windows = [kernelPromptWindow, codePromptWindow, stackPromptWindow, heapPromptWindow]
-        self.promptMainBoard.register_windows(windows)
+class ALFworldProgram:
+    def __init__(self):
         self.llm_client = LLMClient()
+        self.promptMainBoard = PromptMainBoard()
+        codeWindow = PromptWindow.from_name(PromptWindow.CodePromptWindow)
+        heapWindow = PromptWindow.from_name(PromptWindow.HeapPromptWindow)
+        stackWindow = PromptWindow.from_name(PromptWindow.StackPromptWindow)
+        ALFworldWindow = PromptWindow.from_name(PromptWindow.ALFworldWindow)
+        kernelWindow = PromptWindow.from_name(PromptWindow.KernelPromptWindow)
+        self.promptMainBoard.register_windows([kernelWindow, codeWindow, heapWindow, stackWindow, ALFworldWindow])
 
-    def run(self, use_cache=True) -> dict:
+    def run(self, use_cache=False):
         if use_cache:
             response = load_cache_result()
         else:
@@ -54,3 +47,4 @@ class ContextProgram:
                 "raw_response": response,
                 "parsed_calls": []
             }
+

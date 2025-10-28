@@ -90,7 +90,7 @@ async def call_llm(data: LLMPrompt):
     # 模拟调用大模型，实际可替换成你的 API
     print("收到 LLM 调用请求！Prompt 内容前50字符：")
     print(prompt[:50])  # 只打印前50个字符，避免太长
-    result=program.run(use_cache=False)
+    result=program.run(use_cache=True)
     for key in module_data:
         if key in result["snapshot"]:
             module_data[key] = result["snapshot"][key]

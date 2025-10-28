@@ -1,0 +1,2 @@
+result: |
+  { "call_type" : "prompt", "func_name" : "heap_set", "kwargs" : { "key" : "civilization_history", "value" : { "round" : 1, "decision" : "初始化文明状态", "judgment" : "作为演化者，我开始引导这个新兴文明。首轮没有历史数据，需要建立基础状态。", "world_changes" : "文明在虚拟沙盘中诞生，具备初始人口和基础资源。", "civilization_state" : { "population" : 1000, "resources" : { "food" : 5000, "materials" : 3000, "energy" : 2000 }, "technology_level" : 1, "policies" : [ "基础生存保障" ] }, "timestamp" : "round_1_init" } } }
