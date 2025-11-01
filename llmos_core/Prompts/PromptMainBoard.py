@@ -2,31 +2,44 @@ import json
 import re
 from collections.abc import Iterable
 
-def parse_response(response: str):
-    """
-    :param response:
-    :return:
-    """
 
+def parse_response(response_text: str):
+    """
+    解析大模型返回的 JSON-only 调用结果。
+    支持单个调用或数组。
+    返回：list[dict] 格式，每个 dict 包含 call_type、func_name、kwargs。
+    """
+    response_text = response_text.strip()
+
+    # 尝试提取纯 JSON（防御模型输出中混入前后空白或格式符）
     try:
-        parsed = json.loads(response)
-        if isinstance(parsed, dict) and "call_type" in parsed:
-            return [parsed]
-        elif isinstance(parsed, list) and "call_type" in parsed:
-            return parsed
+        data = json.loads(response_text)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"模型输出不是合法 JSON：{e}\n输出内容:\n{response_text[:500]}")
 
-    except json.JSONDecodeError:
-        pass
+    # 标准化为列表
+    if isinstance(data, dict):
+        data = [data]
+    elif not isinstance(data, list):
+        raise TypeError(f"顶层结构必须是对象或数组，收到：{type(data)}")
 
-    matches = re.finditer(r"\[(\w+):(\w+)\((.*?)\)\]", response)
     calls = []
-    for match in matches:
-        call_type, func_name, args = match.groups()
-        kwargs = {kv.split("=")[0]: kv.split("=")[1]
-                  for kv in args.split(",") if "=" in kv}
+    for idx, item in enumerate(data):
+        if not isinstance(item, dict):
+            raise ValueError(f"第 {idx} 个调用不是对象类型")
+        for key in item.keys():
+            if key not in ("call_type", "func_name", "kwargs"):
+                raise ValueError(f"非法字段: {key}")
+        if "call_type" not in item or "func_name" not in item:
+            raise ValueError(f"缺少必要字段: call_type 或 func_name")
+        if item["call_type"] != "prompt":
+            raise ValueError(f"不支持的 call_type: {item['call_type']}")
+        kwargs = item.get("kwargs", {})
+        if not isinstance(kwargs, dict):
+            raise ValueError("kwargs 必须为字典类型")
         calls.append({
-            "call_type": call_type,
-            "func_name": func_name,
+            "call_type": item["call_type"],
+            "func_name": item["func_name"],
             "kwargs": kwargs
         })
     return calls

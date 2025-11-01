@@ -10,7 +10,7 @@ class BasePromptWindow(ABC):
     @abstractmethod
     def forward(self, *args, **kwargs):
         """根据当前状态，将提示词内容序列化为可用的字符串。"""
-        return ""
+        return f"{self.export_meta_prompt()}{self.export_state_prompt()}"
 
     @classmethod
     def register(cls, *window_names):

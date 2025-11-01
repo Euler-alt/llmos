@@ -10,7 +10,7 @@ from .system_window import (
 
 from .chat_window import ChatWindow,AsyChatPromptWindow
 from .ALFworldWindow import ALFworldWindow
-
+from .think_window import ThinkWindow
 from enum import Enum
 
 
@@ -23,7 +23,7 @@ class PromptWindow(Enum):
     ALFworldWindow = 'alfworld'
     ChatPromptWindow = 'ChatWindow'
     AsyChatPromptWindow = 'AsyChatPromptWindow'
-
+    ThinkingPromptWindow = 'think_window'
     # 关键修改：重写 __str__
     def __str__(self):
         """让 Enum 成员被 str() 转换时，返回其内部的字符串值"""

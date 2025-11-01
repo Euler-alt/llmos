@@ -21,7 +21,6 @@ app.add_middleware(
 )
 
 # 加载上下文程序
-context_code = Path(__file__).parent / 'tests' / 'prompt_code' / 'engage_agent.txt'
 program = ChatProgram()
 
 
@@ -79,6 +78,15 @@ class BackendState:
                 icon="code"
             ),
             WindowConfig(
+                id="text-4",
+                type="text",
+                title="think_window",
+                description="大模型思考信息",
+                order=4,
+                color="red",
+                icon="code"
+            ),
+            WindowConfig(
                 id="chat-5",
                 type="chat",
                 title="ChatWindow",
@@ -95,7 +103,8 @@ class BackendState:
             "Heap": "持久化存储：\n- 当前用户：Alex\n- 任务目标：查找最新的AI新闻",
             "Stack": "任务执行栈：\n- [step 1] 调用搜索工具\n- [step 2] 汇总搜索结果",
             "ALFWorld": "文本",
-            "ChatWindow":"聊天消息展示"
+            "ChatWindow":"聊天消息展示",
+            "think_window":"思考信息"
         }
 
         # SSE 客户端队列
