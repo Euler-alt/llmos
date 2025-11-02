@@ -4,8 +4,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import DynamicWindowFactory from '../components/DynamicWindowFactory';
-import { registerComponent, getAvailableComponentTypes } from '../components/ComponentRegistry';
+import DynamicWindowFactory from '../components/PromptWindows/DynamicWindowFactory';
+import { registerComponent, getAvailableComponentTypes } from '../components/PromptWindows/ComponentRegistry';
 import { mockBackendSSEData, backendIntegrationHelpers } from '../protocols/BackendIntegrationExample';
 
 // 模拟自定义组件

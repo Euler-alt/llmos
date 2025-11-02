@@ -3,73 +3,88 @@
  * 支持后端配置驱动的动态窗口生成
  */
 
-import KernelWindow from './PromptWindows/KernelWindow';
-import HeapWindow from './PromptWindows/HeapWindow';
-import StackWindow from './PromptWindows/StackWindow';
-import CodeWindow from './PromptWindows/CodeWinodw';
-import TextWindow from "./PromptWindows/TextWindow";
-import ChatWindow from "./PromptWindows/ChatWindow";
+import KernelWindow from './KernelWindow';
+import HeapWindow from './HeapWindow';
+import StackWindow from './StackWindow';
+import CodeWindow from './CodeWinodw';
+import TextWindow from "./TextWindow";
+import ChatWindow from "./ChatWindow";
+
+
+function createWindowConfig(config = {}) {
+  return {
+    windowType:'text',
+    windowId:'0',
+    windowTitle: '未命名窗口',
+    description: '',
+    windowTheme: 'gray',
+    icon: 'unknown',
+    tabs: ['meta', 'state'],
+    ...config
+  };
+}
+
 // 组件注册表 - 前端声明可用的组件类型
 const componentRegistry = {
   chat:{
     component:ChatWindow,
-    defaultConfig:{
-      title: '对话窗口',
+    defaultConfig: createWindowConfig({
+      windowTitle: '对话窗口',
       description: '对话交互',
-      theme: 'orange',
+      windowTheme: 'orange',
       icon: 'text',
       tabs: ['meta', 'state','chat']
-    }
+    })
   },
   text:{
     component: TextWindow,
-    defaultConfig:{
-      title: '通用文本窗口',
+    defaultConfig:createWindowConfig({
+      windowTitle: '通用文本窗口',
       description: '通用展示一段文本',
-      theme: 'blue',
+      windowTheme: 'blue',
       icon: 'text',
       tabs: ['meta', 'state']
-    }
+    })
   },
   kernel: {
     component: KernelWindow,
-    defaultConfig: {
-      title: '内核窗口 (Kernel)',
+    defaultConfig: createWindowConfig({
+      windowTitle: '内核窗口 (Kernel)',
       description: '系统规则和工作流程',
-      theme: 'blue',
+      windowTheme: 'blue',
       icon: 'kernel',
       tabs: ['meta', 'state']
-    }
+    })
   },
   heap: {
     component: HeapWindow,
-    defaultConfig: {
-      title: '堆窗口 (Heap)',
+    defaultConfig: createWindowConfig({
+      windowTitle: '堆窗口 (Heap)',
       description: '持久化存储区域',
-      theme: 'green',
+      windowTheme: 'green',
       icon: 'heap',
       tabs: ['meta', 'state']
-    }
+    })
   },
   stack: {
     component: StackWindow,
-    defaultConfig: {
-      title: '栈模块 (Stack)',
+    defaultConfig: createWindowConfig({
+      windowTitle: '栈模块 (Stack)',
       description: '临时工作区域',
-      theme: 'yellow',
+      windowTheme: 'yellow',
       icon: 'stack',
       tabs: ['meta', 'state']
-    }
+    })
   },
   code: {
     component: CodeWindow,
-    defaultConfig: {
-      title: '代码窗口 (Code)',
+    defaultConfig: createWindowConfig({
+      windowTitle: '代码窗口 (Code)',
       description: '代码编辑和执行区域',
-      theme: 'red',
+      windowTheme: 'red',
       icon: 'code',
       tabs: ['meta', 'state']
-    }
+    })
   }
 };
 
@@ -104,13 +119,13 @@ export const registerComponent = (type, component, config = {}) => {
  * @returns {Object} 合并后的配置
  */
 export const getComponentConfig = (type, backendConfig = {}) => {
-  const baseConfig = componentRegistry[type]?.defaultConfig || {
-    title: type,
+  const baseConfig = componentRegistry[type]?.defaultConfig || createWindowConfig({
+    windowTitle: type,
     description: '未知组件',
-    theme: 'gray',
+    windowTheme: 'gray',
     icon: 'unknown',
     tabs: ['meta', 'state']
-  };
+  });
   
   return {
     ...baseConfig,
@@ -155,7 +170,7 @@ export const validateBackendConfig = (backendConfig) => {
     
     // 检查每个窗口配置
     for (const windowConfig of backendConfig.windows) {
-      if (!windowConfig.type || !componentRegistry[windowConfig.type]) {
+      if (!windowConfig.windowType || !componentRegistry[windowConfig.windowType]) {
         console.warn(`未知的组件类型: ${windowConfig.type}`);
         return false;
       }

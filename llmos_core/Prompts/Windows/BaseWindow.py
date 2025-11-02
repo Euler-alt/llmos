@@ -13,7 +13,7 @@ class BasePromptWindow(ABC):
         return f"{self.export_meta_prompt()}{self.export_state_prompt()}"
 
     @classmethod
-    def register(cls, *window_names):
+    def register(cls, *window_names): 
         def decorator(subclass):
             for name in window_names:
                 # 无论是字符串还是 Enum 成员，str(name) 都能得到所需的字符串键

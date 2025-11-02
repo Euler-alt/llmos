@@ -27,12 +27,12 @@ program = ChatProgram()
 # 新式后端状态管理
 class WindowConfig(BaseModel):
     """窗口配置模型"""
-    id: str
-    type: str  # 必须与前端组件注册表匹配：kernel, heap, stack, code
-    title: str
+    WindowId: str
+    windowType: str  # 必须与前端组件注册表匹配：kernel, heap, stack, code
+    windowTitle: str
     description: Optional[str] = None
     order: int = 0
-    color: Optional[str] = None
+    windowTheme: Optional[str] = None
     icon: Optional[str] = None
 
 
@@ -42,57 +42,57 @@ class BackendState:
     def __init__(self):
         self.window_configs: List[WindowConfig] = [
             WindowConfig(
-                id="kernel-1",
-                type="kernel",
-                title="Kernel",
+                WindowId="kernel-1",
+                windowType="kernel",
+                windowTitle="Kernel",
                 description="系统规则和工作流程",
                 order=0,
-                color="blue",
+                windowTheme="blue",
                 icon="kernel"
             ),
             WindowConfig(
-                id="heap-2",
-                type="heap",
-                title="Heap",
+                WindowId="heap-2",
+                windowType="heap",
+                windowTitle="Heap",
                 description="持久化存储区域",
                 order=1,
-                color="green",
+                windowTheme="gray",
                 icon="heap"
             ),
             WindowConfig(
-                id="stack-3",
-                type="stack",
-                title="Stack",
+                WindowId="stack-3",
+                windowType="stack",
+                windowTitle="Stack",
                 description="临时工作区域",
                 order=2,
-                color="yellow",
+                windowTheme="green",
                 icon="stack"
             ),
             WindowConfig(
-                id="text-4",
-                type="text",
-                title="ALFWorld",
+                WindowId="text-4",
+                windowType="text",
+                windowTitle="ALFWorld",
                 description="alfworld信息",
                 order=4,
-                color="red",
+                windowTheme="purple",
                 icon="code"
             ),
             WindowConfig(
-                id="text-4",
-                type="text",
-                title="think_window",
+                WindowId="text-4",
+                windowType="text",
+                windowTitle="think_window",
                 description="大模型思考信息",
                 order=4,
-                color="red",
+                windowTheme="yellow",
                 icon="code"
             ),
             WindowConfig(
-                id="chat-5",
-                type="chat",
-                title="ChatWindow",
+                WindowId="chat-5",
+                windowType="chat",
+                windowTitle="ChatWindow",
                 description="对话交互",
                 order=5,
-                color="orange",
+                windowTheme="orange",
                 icon="code"
             )
         ]
@@ -189,12 +189,12 @@ async def update_window_configs(request: Request):
 
             # 创建窗口配置对象
             config = WindowConfig(
-                id=config_data.get("id", f"{config_data.get('type')}-{len(validated_configs)}"),
-                type=config_data.get("type"),
-                title=config_data.get("title", config_data.get('type')),
+                WindowId=config_data.get("id", f"{config_data.get('type')}-{len(validated_configs)}"),
+                windowType=config_data.get("type"),
+                windowTitle=config_data.get("title", config_data.get('type')),
                 description=config_data.get("description"),
                 order=config_data.get("order", len(validated_configs)),
-                color=config_data.get("color"),
+                windowTheme=config_data.get("color"),
                 icon=config_data.get("icon")
             )
             validated_configs.append(config)

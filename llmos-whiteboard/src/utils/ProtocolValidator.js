@@ -3,7 +3,7 @@
  * 用于测试和验证协议实现
  */
 
-import { validateBackendConfig, getAvailableComponentTypes } from '../components/ComponentRegistry';
+import { validateBackendConfig, getAvailableComponentTypes } from '../components/PromptWindows/ComponentRegistry';
 
 /**
  * 验证协议实现

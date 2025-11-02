@@ -11,12 +11,12 @@ class ALFworldProgram:
     def __init__(self):
         self.llm_client = LLMClient()
         self.promptMainBoard = PromptMainBoard()
-        codeWindow = PromptWindow.from_name(PromptWindow.CodePromptWindow)
-        heapWindow = PromptWindow.from_name(PromptWindow.HeapPromptWindow)
-        stackWindow = PromptWindow.from_name(PromptWindow.StackPromptWindow)
-        ALFworldWindow = PromptWindow.from_name(PromptWindow.ALFworldWindow)
-        kernelWindow = PromptWindow.from_name(PromptWindow.KernelPromptWindow)
-        self.promptMainBoard.register_windows([kernelWindow, codeWindow, heapWindow, stackWindow, ALFworldWindow])
+        code_window = PromptWindow.from_name(PromptWindow.CodePromptWindow)
+        heap_window = PromptWindow.from_name(PromptWindow.HeapPromptWindow)
+        stack_window = PromptWindow.from_name(PromptWindow.StackPromptWindow)
+        alfworld_window = PromptWindow.from_name(PromptWindow.ALFworldWindow)
+        kernel_window = PromptWindow.from_name(PromptWindow.KernelPromptWindow)
+        self.promptMainBoard.register_windows([kernel_window, code_window, heap_window, stack_window, alfworld_window])
 
     def run(self, use_cache=False):
         if use_cache:
@@ -35,7 +35,7 @@ class ALFworldProgram:
                     self.promptMainBoard.handle_call(func_name, **kwargs)
 
             return {
-                "snapshot": self.promptMainBoard.get_divide_snapshot(),
+                "snapshot": self.promptMainBoard.get_divided_snapshot(),
                 "raw_response": response,
                 "parsed_calls": calls
             }

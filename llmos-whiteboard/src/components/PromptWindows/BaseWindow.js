@@ -4,6 +4,8 @@ import React, {useEffect, useRef, useState} from 'react';
 // 这是核心的主题配置，将主题名称（如 'red'）映射到所需的 Tailwind CSS 类名。
 // 每个属性都包含 'light'（浅色模式）和 'dark'（深色模式）两种配置。
 const THEME_MAP = {
+    // --- 原有主题 ---
+
     // 红色主题 (Red Theme) - 适合代码/警告窗口
     'red': {
         // header: 窗口头部背景色
@@ -37,7 +39,50 @@ const THEME_MAP = {
         ring: { light: 'ring-green-400', dark: 'ring-green-500' },
         border: { light: 'border-green-200', dark: 'border-gray-700' },
     },
+
+    // --- 新增主题 ---
+
+    // 1. 紫色主题 (Purple Theme) - 适合配置/设置窗口
+    'purple': {
+        header: { light: 'bg-purple-600', dark: 'bg-purple-900' },
+        bgAccent: { light: 'bg-purple-50', dark: 'bg-gray-800' },
+        accent: { light: 'text-purple-600', dark: 'text-purple-400' },
+        focus: { light: 'focus:ring-purple-400', dark: 'focus:ring-purple-500' },
+        ring: { light: 'ring-purple-400', dark: 'ring-purple-500' },
+        border: { light: 'border-purple-200', dark: 'border-gray-700' },
+    },
+
+    // 2. 黄色主题 (Yellow Theme) - 适合待办/提示窗口 (注意：深色模式头部颜色略有调整以提高可读性)
+    'yellow': {
+        header: { light: 'bg-yellow-600', dark: 'bg-yellow-800' }, // 深色模式下用 800，避免太暗
+        bgAccent: { light: 'bg-yellow-50', dark: 'bg-gray-800' },
+        accent: { light: 'text-yellow-600', dark: 'text-yellow-400' },
+        focus: { light: 'focus:ring-yellow-400', dark: 'focus:ring-yellow-500' },
+        ring: { light: 'ring-yellow-400', dark: 'ring-yellow-500' },
+        border: { light: 'border-yellow-200', dark: 'border-gray-700' },
+    },
+
+    // 3. 青色主题 (Cyan Theme) - 适合通知/信息流窗口
+    'cyan': {
+        header: { light: 'bg-cyan-600', dark: 'bg-cyan-900' },
+        bgAccent: { light: 'bg-cyan-50', dark: 'bg-gray-800' },
+        accent: { light: 'text-cyan-600', dark: 'text-cyan-400' },
+        focus: { light: 'focus:ring-cyan-400', dark: 'focus:ring-cyan-500' },
+        ring: { light: 'ring-cyan-400', dark: 'ring-cyan-500' },
+        border: { light: 'border-cyan-200', dark: 'border-gray-700' },
+    },
+
+    // 4. 灰色主题 (Gray Theme) - 适合默认/不强调的窗口
+    'gray': {
+        header: { light: 'bg-gray-600', dark: 'bg-gray-900' },
+        bgAccent: { light: 'bg-gray-50', dark: 'bg-gray-800' },
+        accent: { light: 'text-gray-600', dark: 'text-gray-400' },
+        focus: { light: 'focus:ring-gray-400', dark: 'focus:ring-gray-500' },
+        ring: { light: 'ring-gray-400', dark: 'ring-gray-500' },
+        border: { light: 'border-gray-200', dark: 'border-gray-700' },
+    },
 };
+
 export const SUPPORTED_THEMES = Object.keys(THEME_MAP);
 
 // --- 2. 主题 Hook (useThemeClasses) ---
@@ -221,7 +266,7 @@ export const BaseWindow = ({ data, onUpdate, darkMode, windowConfig}) => {
   const metaTextareaRef = useRef(null);
   const stateTextareaRef = useRef(null);
 
-  const themeName = windowConfig?.theme || 'red'
+  const themeName = windowConfig?.windowTheme || 'red'
   // --- 关键点：使用 Hook 获取所有主题相关的类名 ---
   // 只需要传入主题名称和深色模式状态
   const themeClasses = useThemeClasses(themeName, darkMode);
@@ -263,16 +308,20 @@ export const BaseWindow = ({ data, onUpdate, darkMode, windowConfig}) => {
     ${containerBgTextClass}
     ${isUpdated ? `ring-2 ${updateRingClass}` : ''} {/* 如果有更新，显示主题色的 Ring */}
     shadow-2xl border ${darkMode ? 'border-gray-700' : containerBorderClass}
-    ${isMaximized ? 'fixed z-50' : 'relative w-full max-w-2xl'}
+    ${/* ${isMaximized ? 'fixed z-50' : 'relative w-full max-w-2xl'} */ ''} // 注释并替换为空字符串
+    ${isMaximized ? 'fixed z-50 !rounded-lg' : 'relative'}
   `;
 
   // 最大化时的固定定位样式
   const maximizedStyle = {
-    top: '5vh',
-    left: '5vh',
-    right: '5vh',
-    bottom: '5vh',
-  };
+        position: 'fixed',
+        top: '10%',
+        left: '25%',
+        right: '25%',
+        bottom: '10%',
+        zIndex: 50,
+        borderRadius: '0.5rem'
+      };
 
   return (
     <div
@@ -282,7 +331,7 @@ export const BaseWindow = ({ data, onUpdate, darkMode, windowConfig}) => {
     >
       {/* 1. 组合：WindowHeader，传入 headerClass 来定制颜色 */}
       <WindowHeader
-        title="代码窗口 (Code)"
+        title={windowConfig?.windowTitle || "窗口 (Window)"}
         darkMode={darkMode}
         isMaximized={isMaximized}
         setIsMaximized={setIsMaximized}

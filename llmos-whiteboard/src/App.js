@@ -6,8 +6,8 @@ import ToolVisualizer from './components/ToolVisualizer';
 import SystemMonitor from './components/SystemMonitor';
 import Navbar from './components/Navbar';
 import DataFlowDiagram from './components/DataFlowDiagram';
-import DynamicWindowFactory from './components/DynamicWindowFactory';
-import { validateBackendConfig } from './components/ComponentRegistry';
+import DynamicWindowFactory from './components/PromptWindows/DynamicWindowFactory';
+import { validateBackendConfig } from './components/PromptWindows/ComponentRegistry';
 const API_BASE_URL = 'http://localhost:3001/api';
 
 const App = () => {
@@ -75,17 +75,17 @@ const App = () => {
     };
   }, []); // 依赖数组为空，只在组件首次加载时建立连接
 
+  // 根据配置顺序组装提示词
+  const sortedWindowConfigs = [...windowConfigs].sort((a, b) => (a.order || 0) - (b.order || 0));
+
   // 这个 useEffect 根据窗口数据和配置组装提示词
   useEffect(() => {
-    if (Object.keys(windows).length === 0 || windowConfigs.length === 0) return;
+    if (Object.keys(windows).length === 0 || sortedWindowConfigs.length === 0) return;
 
     const assemblePrompt = () => {
       let promptString = `# LLM OS 提示词组装\n\n`;
-
-      // 根据配置顺序组装提示词
-      const sortedConfigs = [...windowConfigs].sort((a, b) => (a.order || 0) - (b.order || 0));
       
-      sortedConfigs.forEach((config) => {
+      sortedWindowConfigs.forEach((config) => {
         const windowData = windows[config.type];
         if (!windowData) return;
 
@@ -111,7 +111,7 @@ const App = () => {
     };
 
     setFullPrompt(assemblePrompt());
-  }, [windows, windowConfigs]);
+  }, [windows, sortedWindowConfigs]);
 
 
   // handleUpdate 函数保持不变，它仍然会发送 POST 请求，但现在后端会负责更新所有前端
@@ -192,7 +192,7 @@ const App = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="space-y-6">
               <DynamicWindowFactory
-                windowConfigs={windowConfigs}
+                windowConfigs={sortedWindowConfigs}
                 windowsData={windows}
                 onUpdate={handleUpdate}
                 darkMode={darkMode}

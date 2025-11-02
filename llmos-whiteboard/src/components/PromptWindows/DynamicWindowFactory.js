@@ -15,7 +15,7 @@ import { getComponent, getComponentConfig } from './ComponentRegistry';
  * @param {boolean} props.darkMode - 暗黑模式
  */
 const DynamicWindow = ({ config, data, onUpdate, darkMode }) => {
-  const Component = getComponent(config.type);
+  const Component = getComponent(config.windowType);
   
   if (!Component) {
     return (
@@ -40,7 +40,7 @@ const DynamicWindow = ({ config, data, onUpdate, darkMode }) => {
   }
   
   // 合并配置和数据
-  const componentConfig = getComponentConfig(config.type, config);
+  const componentConfig = getComponentConfig(config.windowType, config);
   return (
     <Component 
       data={data}
@@ -74,14 +74,14 @@ const DynamicWindowFactory = ({ windowConfigs = [], windowsData = {}, onUpdate, 
       </div>
     );
   }
-  
+
   return (
     <div className="space-y-6">
       {windowConfigs.map((windowConfig, index) => (
         <DynamicWindow
-          key={windowConfig.id || `${windowConfig.type}-${index}`}
+          key={windowConfig.windowId || `${windowConfig.windowType}-${index}`}
           config={windowConfig}
-          data={windowsData[windowConfig.title] || {}}
+          data={windowsData[windowConfig.windowTitle] || {}}
           onUpdate={onUpdate}
           darkMode={darkMode}
         />

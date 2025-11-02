@@ -1,12 +1,12 @@
 import React  from 'react';
-import {BaseWindow,SUPPORTED_THEMES} from "./BaseWindow";
-const HeapWindow = ({ data, onUpdate, darkMode }) => {
+import {BaseWindow} from "./BaseWindow";
+const HeapWindow = ({ data, onUpdate, darkMode,windowConfig }) => {
   return (
     <BaseWindow
       data={data}
       onUpdate={onUpdate}
       darkMode={darkMode}
-      theme={SUPPORTED_THEMES[0]}
+      windowConfig={windowConfig}
     />
   )
 };

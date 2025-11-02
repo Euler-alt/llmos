@@ -3,7 +3,7 @@
  * 单元测试和集成测试
  */
 
-import { validateBackendConfig, getAvailableComponentTypes, registerComponent } from '../components/ComponentRegistry';
+import { validateBackendConfig, getAvailableComponentTypes, registerComponent } from '../components/PromptWindows/ComponentRegistry';
 import { validateProtocolImplementation } from '../utils/ProtocolValidator';
 
 // 模拟测试组件

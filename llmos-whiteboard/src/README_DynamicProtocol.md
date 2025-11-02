@@ -27,14 +27,14 @@
 
 ```javascript
 // App.js - 使用动态窗口工厂
-import DynamicWindowFactory from './components/DynamicWindowFactory';
+import DynamicWindowFactory from './DynamicWindowFactory';
 
 // 替换硬编码的窗口渲染
 <DynamicWindowFactory
-  windowConfigs={windowConfigs}  // 后端配置的窗口列表
-  windowsData={windows}          // 窗口数据
-  onUpdate={handleUpdate}        // 更新回调
-  darkMode={darkMode}            // 主题模式
+    windowConfigs={windowConfigs}  // 后端配置的窗口列表
+    windowsData={windows}          // 窗口数据
+    onUpdate={handleUpdate}        // 更新回调
+    darkMode={darkMode}            // 主题模式
 />
 ```
 
@@ -75,13 +75,13 @@ import DynamicWindowFactory from './components/DynamicWindowFactory';
 ### 3. 注册自定义组件
 
 ```javascript
-import { registerComponent } from './components/ComponentRegistry';
+import {registerComponent} from './ComponentRegistry';
 
 // 注册新组件类型
 registerComponent('custom-analytics', CustomAnalyticsComponent, {
-  title: '数据分析',
-  color: 'purple',
-  tabs: ['dashboard', 'metrics']
+   title: '数据分析',
+   color: 'purple',
+   tabs: ['dashboard', 'metrics']
 });
 ```
 
@@ -96,13 +96,13 @@ registerComponent('custom-analytics', CustomAnalyticsComponent, {
 ### 注册表 API
 
 ```javascript
-import { 
-  registerComponent,
-  getComponent,
-  getComponentConfig,
-  getAvailableComponentTypes,
-  validateBackendConfig
-} from './components/ComponentRegistry';
+import {
+   registerComponent,
+   getComponent,
+   getComponentConfig,
+   getAvailableComponentTypes,
+   validateBackendConfig
+} from './ComponentRegistry';
 
 // 注册新组件
 registerComponent('type', Component, config);
