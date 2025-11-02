@@ -32,7 +32,7 @@ class WindowConfig(BaseModel):
     title: str
     description: Optional[str] = None
     order: int = 0
-    color: Optional[str] = None
+    theme: Optional[str] = None
     icon: Optional[str] = None
 
 
@@ -47,7 +47,7 @@ class BackendState:
                 title="Kernel",
                 description="系统规则和工作流程",
                 order=0,
-                color="blue",
+                theme="blue",
                 icon="kernel"
             ),
             WindowConfig(
@@ -56,7 +56,7 @@ class BackendState:
                 title="Heap",
                 description="持久化存储区域",
                 order=1,
-                color="green",
+                theme="gary",
                 icon="heap"
             ),
             WindowConfig(
@@ -65,7 +65,7 @@ class BackendState:
                 title="Stack",
                 description="临时工作区域",
                 order=2,
-                color="yellow",
+                theme="green",
                 icon="stack"
             ),
             WindowConfig(
@@ -74,7 +74,7 @@ class BackendState:
                 title="ALFWorld",
                 description="alfworld信息",
                 order=4,
-                color="red",
+                theme="purple",
                 icon="code"
             ),
             WindowConfig(
@@ -83,7 +83,7 @@ class BackendState:
                 title="think_window",
                 description="大模型思考信息",
                 order=4,
-                color="red",
+                theme="yellow",
                 icon="code"
             ),
             WindowConfig(
@@ -92,7 +92,7 @@ class BackendState:
                 title="ChatWindow",
                 description="对话交互",
                 order=5,
-                color="orange",
+                theme="orange",
                 icon="code"
             )
         ]
@@ -194,7 +194,7 @@ async def update_window_configs(request: Request):
                 title=config_data.get("title", config_data.get('type')),
                 description=config_data.get("description"),
                 order=config_data.get("order", len(validated_configs)),
-                color=config_data.get("color"),
+                theme=config_data.get("color"),
                 icon=config_data.get("icon")
             )
             validated_configs.append(config)
