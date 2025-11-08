@@ -3,7 +3,7 @@ from llmos_core.Prompts import PromptMainBoard, parse_response
 from llmos_core.llmos_util import LLMClient
 from llmos_core.Prompts.Windows import PromptWindow
 
-from .cache import load_cache_result
+from llmos_core.cache import load_cache_result
 
 
 
@@ -14,7 +14,7 @@ class ALFworldProgram:
         code_window = PromptWindow.from_name(PromptWindow.CodePromptWindow)
         heap_window = PromptWindow.from_name(PromptWindow.HeapPromptWindow)
         stack_window = PromptWindow.from_name(PromptWindow.StackPromptWindow)
-        alfworld_window = PromptWindow.from_name(PromptWindow.ALFworldWindow)
+        alfworld_window = PromptWindow.from_name(PromptWindow.ALFWorldWindow)
         kernel_window = PromptWindow.from_name(PromptWindow.KernelPromptWindow)
         self.promptMainBoard.register_windows([kernel_window, code_window, heap_window, stack_window, alfworld_window])
 

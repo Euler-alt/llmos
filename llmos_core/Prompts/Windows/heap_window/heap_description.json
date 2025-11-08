@@ -1,5 +1,5 @@
 {
-  "module": "HeapPromptModule",
+  "window": "HeapPromptWindow",
   "description": "Heap 模块管理一个全局键值存储（key-value heap），用于保存 LLM 推理中需要持久化或跨帧访问的数据。",
   "call_type": "prompt",
   "functions": [

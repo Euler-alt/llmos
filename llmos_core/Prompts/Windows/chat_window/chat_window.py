@@ -1,11 +1,13 @@
-from .BaseWindow import BasePromptWindow
+from llmos_core.Prompts.Windows.BaseWindow.BaseWindow import BasePromptWindow
 from pathlib import Path
 
+Meta_dir = Path(__file__).parent
+Meta_file = Meta_dir / 'user_instruction.json'
 @BasePromptWindow.register('ChatWindow', 'chatWindow')
 class ChatWindow(BasePromptWindow):
     def __init__(self,code_file=None,window_name="ChatWindow"):
         super().__init__(window_name=window_name)
-        default_path = Path(__file__).parent / 'texts' / 'user_instruction.json'
+        default_path = Meta_file
         self.code_file = code_file if code_file else default_path
         with open(self.code_file,'r') as f:
             self.meta_prompt = f.read()
@@ -41,10 +43,6 @@ class ChatWindow(BasePromptWindow):
             "llm_response": self.llm_response,
         }
 
-
-
-import asyncio
-from collections import deque
 
 import asyncio
 from threading import Thread

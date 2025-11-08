@@ -1,0 +1,58 @@
+{
+  "window": "ThinkWindow",
+  "description": "Think 模块用于记录、反思与总结模型在任务执行过程中的思维内容（Meta-cognitive State）。该模块是系统的思维缓冲区，用于存储上一次的推理链、假设或反思文本，并在必要时生成新的思考内容。",
+  "call_type": "prompt",
+  "functions": [
+    {
+      "name": "new_think",
+      "description": "记录新的思考内容（或覆盖旧的思考内容）。该函数用于在模型内部更新当前思维状态，确保系统能够追踪思考的演化。",
+      "parameters": {
+        "content": "string (必选) - 思考文本。应为简明、结构化的推理、总结或反思内容，可包含多层次逻辑但不应混入任务执行日志。"
+      },
+      "return": {
+        "success": { "status": "ok", "updated_content": "当前最新思考文本" },
+        "error": { "status": "error", "reason": "invalid or empty content" }
+      },
+      "example_call": {
+        "call_type": "prompt",
+        "func_name": "new_think",
+        "kwargs": {
+          "content": "在上一次任务中，未能在卧室找到台灯，可能因为未检查书桌区域。下次应从书桌开始搜索。"
+        }
+      }
+    }
+  ],
+  "forward_format": {
+    "description": "当内核需要将思考窗口内容注入提示词时，系统会按以下格式拼接。",
+    "format_example": "#Think Window:\n<current_think_content>\n#Last Thinks:\n<previous_think_summary_if_any>"
+  },
+  "usage_examples": [
+    {
+      "action": "记录新的思考",
+      "call": {
+        "call_type": "prompt",
+        "func_name": "new_think",
+        "kwargs": {
+          "content": "当前任务需要在不同房间中寻找目标物品。应优先处理可能性最高的区域，以减少无效搜索。"
+        }
+      }
+    },
+    {
+      "action": "覆盖旧的思考",
+      "call": {
+        "call_type": "prompt",
+        "func_name": "new_think",
+        "kwargs": {
+          "content": "根据上次任务失败的情况，推测照明不足可能导致遗漏。应携带光源再次搜索。"
+        }
+      }
+    }
+  ],
+  "notes": [
+    "ThinkWindow 只负责记录思考、推理与反思文本，不记录执行日志或操作命令。",
+    "每次 new_think 调用都会覆盖旧的思考内容；若需要保留历史，可在上层逻辑中缓存。",
+    "禁止将 Stack、Action、Code 等模块中的运行日志或中间状态写入此窗口。",
+    "推荐使用结构化思考格式，例如：\n- Context: ...\n- Reasoning: ...\n- Reflection: ...",
+    "[K-RULE 关键语义约束]:\n1. 思考内容必须与任务上下文相关，不能生成无关文本。\n2. 内容需具备逻辑性与因果关系。\n3. 禁止在思考中包含具体执行指令或工具调用语句。"
+  ]
+}

@@ -1,0 +1,71 @@
+{
+    "window": "StackPromptWindow",
+    "description": "用于维护任务分层规划（Task Execution Context）。每一次外部 API 或其他模块调用前，必须先在同一 JSON 调用数组中 stack_push 一个帧。",
+    "call_type": "prompt",
+
+    "functions": [
+      {
+        "name": "stack_push",
+        "description": "启动一个子任务，压入一个栈帧，用于规划与上下文记录。",
+        "parameters": {
+          "name": "string (optional, 默认自动生成唯一名)",
+          "description": "string (optional, 子任务目标描述)",
+          "variables": "dict (optional, 仅存局部参数和关键输入，禁止存储环境观测或推理文本)"
+        },
+        "return": {
+          "success": {"status": "ok", "stack_size": "N"},
+          "error": {"status": "error", "reason": "invalid arguments"}
+        }
+      },
+
+      {
+        "name": "stack_pop",
+        "description": "结束当前子任务，弹出栈顶帧，可携带结果返回。",
+        "parameters": {
+          "result": "any (optional)"
+        },
+        "return": {
+          "success": {"status": "ok", "popped": "frame_name", "stack_size": "N"},
+          "error": {"status": "error", "reason": "stack empty"}
+        }
+      },
+
+      {
+        "name": "stack_setvar",
+        "description": "向栈顶帧的局部变量（variables）字典中原子性地添加或更新键值对。用于记录任务执行中产生的关键状态或结果。",
+        "parameters": {
+          "variables": "dict (required) — 要设置或更新的键值对"
+        },
+        "return": {
+          "success": {"status": "ok", "updated_keys": "list", "stack_size": "N"},
+          "error": {"status": "error", "reason": "no active frame or invalid variables"}
+        }
+      },
+
+      {
+        "name": "stack_replace",
+        "description": "更新当前帧，用于错误回溯或重新规划。允许修改变量与描述，并写入 fail_reason。",
+        "parameters": {
+          "description": "string (optional)",
+          "variables": "dict (optional)",
+          "fail_reason": "string (optional, default: 'unknown failure')"
+        },
+        "return": {
+          "success": {"status": "ok", "replaced": "frame_name"},
+          "error": {"status": "error", "reason": "no active frame"}
+        }
+      }
+    ],
+
+    "forward_format": {
+
+      "frame_format": "Function <frame_name>: <frame_description>\nVariables: <variables-as-json>\n[Previous failure: <fail_reason>] (optional)"
+    },
+
+    "constraints": [
+      "stack_push → stack_setvar（更新变量）→ pop 是标准流程",
+      "每次外部 API 或模块调用前，必须先 stack_push 并记录规划",
+      "variables 中禁止存储推理文本或环境观测的冗长内容",
+      "使用 stack_setvar 来原子性地记录和更新关键局部状态。"
+    ]
+}

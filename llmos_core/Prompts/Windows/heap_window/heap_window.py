@@ -1,13 +1,15 @@
-from .BaseWindow import BasePromptWindow
+from llmos_core.Prompts.Windows.BaseWindow.BaseWindow import BasePromptWindow
 from pathlib import Path
 import json
 
+Meta_dir = Path(__file__).parent
+Meta_file = Meta_dir / 'heap_description.json'
 @BasePromptWindow.register('heap','Heap')
 class HeapPromptWindow(BasePromptWindow):
 
     def __init__(self, window_name="Heap"):
         super().__init__(window_name=window_name)
-        self.file_path = Path(__file__).parent / 'texts' / 'heap_description.json'
+        self.file_path = Meta_file
         with open(self.file_path,'r') as f:
             self.description = f.read()
         # 堆的核心数据结构，一个全局字典

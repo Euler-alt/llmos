@@ -1,17 +1,17 @@
-from .BaseWindow import BasePromptWindow
-from .heap_window import HeapPromptWindow
-from .stack_window import StackPromptWindow
-from .static_window import KernelPromptModule,CodePromptModule
+from llmos_core.Prompts.Windows.BaseWindow.BaseWindow import BasePromptWindow
+from llmos_core.Prompts.Windows.heap_window.heap_window import HeapPromptWindow
+from llmos_core.Prompts.Windows.stack_window.stack_window import StackPromptWindow
+from llmos_core.Prompts.Windows.static_window.static_window import KernelPromptWindow,CodePromptWindow
 
 @BasePromptWindow.register('system_window')
 class SystemPromptWindow(BasePromptWindow):
 
     def __init__(self, kernel_file=None,heap_file=None,stack_file=None,code_file=None):
         super().__init__()
-        self.kernelPromptWindow = KernelPromptModule(kernel_file)
+        self.kernelPromptWindow = KernelPromptWindow(kernel_file)
         self.heapPromptWindow = HeapPromptWindow(heap_file)
         self.stackPromptWindow = StackPromptWindow(stack_file)
-        self.codePromptWindow = CodePromptModule(code_file)
+        self.codePromptWindow = CodePromptWindow(code_file)
         self.Windows = [self.kernelPromptWindow, self.heapPromptWindow, self.stackPromptWindow, self.codePromptWindow]
         for window in self.Windows:
             self.handlers.update(window.export_handlers() or {})
@@ -28,10 +28,10 @@ class SystemPromptWindow(BasePromptWindow):
             handlers.update(window.export_handlers() or {})
         return handlers
 
-    def get_divide_snapshot(self):
+    def get_divided_snapshot(self):
         divided_snap_shot = {}
         for window in self.Windows:
-            divided_snap_shot.update(window.get_divide_snapshot())
+            divided_snap_shot.update(window.get_divided_snapshot())
         return divided_snap_shot
 
     def get_snapshot(self):

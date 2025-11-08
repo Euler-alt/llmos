@@ -1,29 +1,32 @@
 # 导入必要的底层实现类，以确保它们在被调用前注册到 BasePromptWindow
-from .BaseWindow import BasePromptWindow
-from .system_window import (
-    SystemPromptWindow,
-    HeapPromptWindow,
-    StackPromptWindow,
-    KernelPromptModule,
-    CodePromptModule
-)
+from  .BaseWindow.BaseWindow import BasePromptWindow
+from  .static_window import KernelPromptWindow,CodePromptWindow
+from  .stack_window import stack_window,flowStackWindow
+from  .heap_window import heap_window
+from  .system_window import SystemPromptWindow
 
-from .chat_window import ChatWindow,AsyChatPromptWindow
-from .ALFworldWindow import ALFworldWindow
-from .think_window import ThinkWindow
+from  .chat_window import ChatWindow,AsyChatPromptWindow
+from  .ALFworldWindow import ALFworldWindow
+from  .think_window import ThinkWindow
+
 from enum import Enum
 
 
 class PromptWindow(Enum):
-    StackPromptWindow = 'stack'
-    HeapPromptWindow = 'heap'
-    SystemPromptWindow = 'system'
     KernelPromptWindow = 'kernel'
     CodePromptWindow = 'code'
-    ALFworldWindow = 'alfworld'
+
+    StackPromptWindow = 'stack'
+    FlowStackPromptWindow = 'flowStack'
+
+    HeapPromptWindow = 'heap'
+    SystemPromptWindow = 'system'
+
     ChatPromptWindow = 'ChatWindow'
+    ALFWorldWindow = 'alfworld'
     AsyChatPromptWindow = 'AsyChatPromptWindow'
     ThinkingPromptWindow = 'think_window'
+
     # 关键修改：重写 __str__
     def __str__(self):
         """让 Enum 成员被 str() 转换时，返回其内部的字符串值"""

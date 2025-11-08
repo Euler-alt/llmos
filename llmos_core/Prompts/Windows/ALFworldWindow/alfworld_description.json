@@ -1,5 +1,5 @@
 {
-  "module": "ALFWorldModule",
+  "window": "ALFWorldWindow",
   "description": "ALFWorld 模块提供了一个基于文本的具身智能体环境，代理可以在家庭环境中执行任务，通过动作与环境交互。",
   "call_type": "prompt",
   "functions": [
@@ -37,7 +37,7 @@
     }
   ],
   "forward_format": {
-    "description": "[ENV MODULE: ALFWorld]\nYou are an embodied agent operating in a text-based environment.\nYou can perform actions by calling 'ALF_step(action=...)', where the action must be one of the available commands listed in the current state.\nEach step returns a new observation, a reward, and whether the task is done.\nThink carefully about the environment and plan your next move.",
+    "description": "[ENV WINDOW: ALFWorld]\nYou are an embodied agent operating in a text-based environment.\nYou can perform actions by calling 'ALF_step(action=...)', where the action must be one of the available commands listed in the current state.\nEach step returns a new observation, a reward, and whether the task is done.\nThink carefully about the environment and plan your next move.",
     "state_data": {
       "structure": {
         "Task": "当前任务描述",

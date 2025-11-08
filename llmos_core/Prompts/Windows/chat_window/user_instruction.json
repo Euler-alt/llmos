@@ -1,5 +1,5 @@
 {
-  "module": "ChatWindow",
+  "window": "ChatWindow",
   "description": "Chat 窗口模块用于与用户进行自然语言交互，维护对话历史记录，并向用户展示大模型输出。LLM 可调用本模块以发送消息给用户或接收来自用户的新输入。",
   "call_type": "prompt",
   "functions": [

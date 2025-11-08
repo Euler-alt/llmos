@@ -1,6 +1,5 @@
-from .BaseWindow import BasePromptWindow
+from llmos_core.Prompts.Windows.BaseWindow.BaseWindow import BasePromptWindow
 from alfworld.agents.environment import get_environment
-import alfworld.agents.modules.generic as generic
 import yaml
 import os
 import traceback  # 引入 traceback 模块用于更详细的错误报告

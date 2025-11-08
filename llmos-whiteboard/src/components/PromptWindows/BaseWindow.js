@@ -281,8 +281,8 @@ export const BaseWindow = ({ data, onUpdate, darkMode, windowConfig}) => {
   } = themeClasses;
 
   // 解构数据
-  const meta = data?.meta || '';
-  const state = data?.state || '';
+  const meta = typeof data?.meta === 'string' ? data.meta : JSON.stringify(data?.meta || {}, null, 2);
+  const state = typeof data?.state === 'string' ? data.state : JSON.stringify(data?.state || {}, null, 2);
   const byteCount = <ByteCount byteCount={(meta?.length || 0) + (state?.length || 0)}/>
 
   // 数据变化时用变量标记一段时间以实现高亮

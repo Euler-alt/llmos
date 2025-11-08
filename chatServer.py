@@ -62,7 +62,7 @@ class BackendState:
             WindowConfig(
                 WindowId="stack-3",
                 windowType="stack",
-                windowTitle="Stack",
+                windowTitle="FlowStackWindow",
                 description="临时工作区域",
                 order=2,
                 windowTheme="green",
@@ -101,7 +101,7 @@ class BackendState:
         self.window_data: Dict[str, Any] = {
             "Kernel": "系统规则和工作流：\n- 始终优先调用工具函数来完成任务。\n- 使用栈模块管理多步任务。",
             "Heap": "持久化存储：\n- 当前用户：Alex\n- 任务目标：查找最新的AI新闻",
-            "Stack": "任务执行栈：\n- [step 1] 调用搜索工具\n- [step 2] 汇总搜索结果",
+            "FlowStackWindow": "任务执行栈：\n- [step 1] 调用搜索工具\n- [step 2] 汇总搜索结果",
             "ALFWorld": "文本",
             "ChatWindow":"聊天消息展示",
             "think_window":"思考信息"
@@ -144,6 +144,8 @@ backend_state = BackendState()
 
 # 用于存储 SSE 客户端队列
 subscribers = []
+
+
 
 
 # GET 接口：获取所有模块数据（向后兼容）
@@ -248,7 +250,26 @@ async def send_sse_update(data):
 class LLMPrompt(BaseModel):
     prompt: str
 
+class LLMresponse(BaseModel):
+    response:str
 
+@app.post("/api/llm/setModel")
+async def set_model(request: Request):
+    body = await request.json()
+    model_name = body.get("model")
+    program.set_client_model(model_name)
+
+@app.post("/api/llm/manual-response")
+async def manual_response(manual_request: LLMresponse):
+    response =manual_request.response
+    print("手动接受回复")
+    parsed_calls=program.apply_response(response)
+    backend_state.update_snapshot()
+    # 广播更新
+    await backend_state.broadcast_update()
+    return {
+        "parsed_calls": parsed_calls
+    }
 @app.post("/api/llm/call")
 async def call_llm(data: LLMPrompt):
     """LLM 调用接口"""
