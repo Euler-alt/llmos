@@ -24,7 +24,7 @@ class ChatWindow(BasePromptWindow):
         return f"\n{joined}"
 
     def forward(self):
-        return f"{self.export_meta_prompt()}{self.export_state_prompt()}"
+        return super().forward()
 
     # === 处理大模型回调 ===
     def llm_response(self, text = ""):

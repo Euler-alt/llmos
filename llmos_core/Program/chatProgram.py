@@ -84,10 +84,7 @@ class ChatProgram(BaseProgram):
         """解析模型回复，并执行其中的prompt调用"""
         calls = parse_response(response)
         for call in calls:
-            if call["call_type"].lower() == "prompt":
-                self.promptMainBoard.handle_call(
-                    call["func_name"], **call["kwargs"]
-                )
+            self.promptMainBoard.handle_call(call)
         return calls
 
     def env_event(self, args,kwargs):

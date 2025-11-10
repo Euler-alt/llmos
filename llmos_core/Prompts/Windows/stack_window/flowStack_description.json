@@ -11,7 +11,7 @@
         "description": "string (required, 子任务目标描述，解释该任务要达到的明确目标)",
         "variables": "dict (optional, 局部状态和参数)",
         "ret_key": "string (optional, 子任务完成后写入父帧 variables 的键名)",
-        "next_instruction": "string (required, 定义第一步要执行的具体动作或计划)"
+        "instruction": "string (required, 定义第一步要执行的具体动作或计划)"
       },
       "return": {
         "success": {"status": "ok", "stack_size": "N", "step": 1},
@@ -67,7 +67,7 @@
       "parameters": {
         "description": "string (optional, 新的任务描述)",
         "variables": "dict (optional, 重置的变量)",
-        "next_instruction": "string (optional, 新的起始指令)",
+        "instruction": "string (optional, 新的起始指令)",
         "fail_reason": "string (required, 为什么需要回溯？之前的策略哪里出错了？)"
       },
       "return": {
@@ -78,7 +78,7 @@
   ],
   "forward_format": {
     "frame_structure": "每个栈帧包含以下信息，在每次调用时完整呈现",
-    "display_format": "Function <frame_name>: <frame_description>\nVariables: <variables-as-json>\n-> INSTRUCTION: <next_instruction>\n\n[Execution History - 你是如何走到这一步的]\n  Step #N-2: <instruction> → <result>\n             Reasoning: <reason>\n  Step #N-1: <instruction> → <result>\n             Reasoning: <reason>\n  (当前 INSTRUCTION 是基于以上历史做出的下一步决策)\n\n[Tried and Failed - 已知无效的路径]\n  - <instruction>: <result> (步骤 #N)"
+    "display_format": "Function <frame_name>: <frame_description>\nVariables: <variables-as-json>\n-> INSTRUCTION: <instruction>\n\n[Execution History - 你是如何走到这一步的]\n  Step #N-2: <instruction> → <result>\n             Reasoning: <reason>\n  Step #N-1: <instruction> → <result>\n             Reasoning: <reason>\n  (当前 INSTRUCTION 是基于以上历史做出的下一步决策)\n\n[Tried and Failed - 已知无效的路径]\n  - <instruction>: <result> (步骤 #N)"
   },
   "constraints": [
     "**【强制推理】**: 每次调用 stack_set_instruction 必须提供 'reason' 和 'last_result'。reason 必须解释为什么选择这个新指令，以及它与上一步有何不同。如果写不出不同点，说明可能陷入循环，应考虑 stack_replace 或 stack_pop。",
@@ -99,7 +99,7 @@
   ],
   "internal_mechanism": {
     "note": "以下内容仅用于理解系统工作原理，无需在调用时处理",
-    "auto_history_tracking": "每次调用 stack_set_instruction 时，系统会自动将当前的 next_instruction、last_result 和 reason 存入 action_history 数组，并更新 step_counter。",
+    "auto_history_tracking": "每次调用 stack_set_instruction 时，系统会自动将当前的 instruction、last_result 和 reason 存入 action_history 数组，并更新 step_counter。",
     "loop_detection": "系统会检查新指令是否在 action_history 的最近5条记录中出现过。如果出现，返回错误并提示之前的尝试结果。",
     "history_display": "只显示最近3-5步的历史，避免 prompt 过长。更早的历史仍然存储，用于循环检测。",
     "step_counter": "每个栈帧维护独立的步骤计数器，从1开始递增，用于标识每一步在任务中的位置。"

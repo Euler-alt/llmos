@@ -23,6 +23,8 @@ class BasePromptWindow(ABC):
         :param window_name: 模块名称，用于识别模块、打印状态或从快照中区分
         """
         self.handlers = {}  # 各模块暴露给 LLM 的处理方法，例如 function call 的入口
+        if window_name is None or window_name == "":
+            window_name = "undefined_windowName"
         self.window_name = window_name
 
     @abstractmethod
@@ -34,7 +36,13 @@ class BasePromptWindow(ABC):
 
         :return: str，最终用于拼接到大模型输入的提示词片段
         """
-        return f"{self.export_meta_prompt()}{self.export_state_prompt()}"
+        return (f"\n"
+                f"<WINDOW START: {self.window_name}>\n"
+                f"META:\n"
+                f"{self.export_meta_prompt()}\n"
+                f"STATE:\n"
+                f"{self.export_state_prompt()}]\n"
+                f"<WINDOW START: {self.window_name}>\n")
 
     @classmethod
     def register(cls, *window_names):
@@ -151,7 +159,7 @@ class NullSystemWindow(BasePromptWindow):
         super().__init__(window_name="null_window")
 
     def forward(self):
-        return ""  # 明确返回空内容
+        return super().forward()  # 明确返回空内容
 
     def export_meta_prompt(self):
         return ""

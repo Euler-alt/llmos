@@ -40,7 +40,7 @@ class StackPromptWindow(BasePromptWindow):
 
     def forward(self, context=None):
         """组合完整提示词"""
-        return f"\n{self.export_meta_prompt()}{self.export_state_prompt()}"
+        return super().forward()
 
     def _stack_push(self,*args,**kwargs):
         frame = {

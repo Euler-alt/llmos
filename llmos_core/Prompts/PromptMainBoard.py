@@ -1,9 +1,8 @@
 import json
-import re
 from collections.abc import Iterable
 from typing import List
 
-from llmos_core.Prompts.Windows import BasePromptWindow
+from llmos_core.Prompts.Windows import BasePromptWindow,FlowStackPromptWindow
 from llmos_core.Prompts.Windows.BaseWindow import NullSystemWindow
 
 
@@ -19,7 +18,7 @@ def parse_response(response_text: str):
     try:
         data = json.loads(response_text)
     except json.JSONDecodeError as e:
-        raise ValueError(f"模型输出不是合法 JSON：{e}\n输出内容:\n{response_text[:500]}")
+        raise ValueError(f"模型输出不是合法 JSON：{e}\n输出内容:\n{response_text[:2000]}")
 
     # 标准化为列表
     if isinstance(data, dict):
@@ -98,12 +97,24 @@ class PromptMainBoard:
         self.system_window = system_window
         self.handlers.update(system_window.export_handlers() or {})
 
-    def handle_call(self, func_name: str, **kwargs):
+    def handle_call(self, call):
         """统一分发到对应窗口的 handler"""
+        func_name = call["func_name"]
+        call_type = call["call_type"]
+        kwargs = call["kwargs"]
         if func_name in self.handlers:
-            return self.handlers[func_name](**kwargs)
+            result = self.handlers[func_name](**kwargs)
+            self.record_handle(call_type,func_name,result,**kwargs)
+            return result
         else:
             return {"status": "error", "reason": f"handler not found: {func_name}"}
+
+    def record_handle(self, call_type,func_name, result, **kwargs):
+        for window in self.windows:
+            if isinstance(window, FlowStackPromptWindow):
+                frame = window.stack[-1]
+                Instruction = frame["instruction"]
+                window.auto_record_action(Instruction,call_type,func_name, result, **kwargs)
 
     def get_divided_snapshot(self):
         divided_snap_shot = {}

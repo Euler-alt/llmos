@@ -27,7 +27,7 @@ class HeapPromptWindow(BasePromptWindow):
 
     def forward(self, context=None):
         """将堆数据序列化成提示词，供 LLM 使用"""
-        return f"{self.export_meta_prompt()}{self.export_state_prompt()}"
+        return super().forward()
 
     def _heap_set(self,*args,**kwargs):
         key = kwargs.get("key")

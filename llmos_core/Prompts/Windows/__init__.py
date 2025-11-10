@@ -1,7 +1,7 @@
 # 导入必要的底层实现类，以确保它们在被调用前注册到 BasePromptWindow
 from  .BaseWindow.BaseWindow import BasePromptWindow
 from  .static_window import KernelPromptWindow,CodePromptWindow
-from  .stack_window import stack_window,flowStackWindow
+from  .stack_window import stack_window,FlowStackPromptWindow
 from  .heap_window import heap_window
 from  .system_window import SystemPromptWindow
 
