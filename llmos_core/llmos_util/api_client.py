@@ -9,7 +9,7 @@ class LLMClient:
         """
         api_config_path = Path(specific_api_config_path).parent if specific_api_config_path else Path(__file__).parent / 'api_configure'
         config_manager = ConfigManager(api_config_path)
-        config_name = specific_api_config_path.name if specific_api_config_path else "api_config.yaml"
+        config_name = specific_api_config_path.frameName if specific_api_config_path else "api_config.yaml"
         self.api_configs  = config_manager.load_yaml_config(config_name)
         self.model_name = None
         self.api_key = None
@@ -31,7 +31,7 @@ class LLMClient:
         self.base_url = api_config["base_url"]
         self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
 
-    def chat(self, user_prompt: str='', system_prompt: str = "", temperature=1.5, max_tokens=2048) -> str:
+    def chat(self, user_prompt: str='', system_prompt: str = "", temperature=0.8, max_tokens=2048) -> str:
         """
         执行一次聊天调用，使用初始化时设定的模型与连接信息。
         """

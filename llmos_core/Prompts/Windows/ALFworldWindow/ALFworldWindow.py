@@ -3,16 +3,23 @@ from alfworld.agents.environment import get_environment
 import yaml
 import os
 import traceback  # 引入 traceback 模块用于更详细的错误报告
-
+from pathlib import Path
 # 假设 ALFWORLD_DATA_ROOT 已经设置好
 ALFWORLD_DATA_ROOT = "/root/PycharmProjects/alfworld/data"
 os.environ['ALFWORLD_DATA'] = ALFWORLD_DATA_ROOT
+
+META_DIR = Path(__file__).parent
+META_FILE = META_DIR / 'alfworld_description.json'
 
 
 @BasePromptWindow.register("alfworld")
 class ALFworldWindow(BasePromptWindow):
     def __init__(self, window_name='ALFWorld'):
         super().__init__(window_name=window_name)
+
+        # 0.加载meta提示词
+        with open(META_FILE, 'r') as f:
+            self.meta = f.read()
 
         # 1. 加载配置
         config_path = os.path.join("/root/PycharmProjects/alfworld/configs", "base_config.yaml")
@@ -43,13 +50,7 @@ class ALFworldWindow(BasePromptWindow):
 
     def export_meta_prompt(self) -> str:
         """定义大模型的角色和工具调用说明。"""
-        return (
-            "[ENV MODULE: ALFWorld]\n"
-            "You are an embodied agent operating in a text-based environment.\n"
-            "You can perform actions by calling 'ALF_step(action=...)', where the action must be one of the available commands listed in the current state.\n"
-            "Each step returns a new observation, a reward, and whether the task is done.\n"
-            "Think carefully about the environment and plan your next move.\n"
-        )
+        return self.meta
 
     def export_state_prompt(self) -> str:
         """将当前环境状态格式化为 Prompt 文本。"""
@@ -138,7 +139,7 @@ class ALFworldWindow(BasePromptWindow):
                          "admissible_commands": []}
             print(f"Generic Error during ALF_step: {traceback.format_exc()}")
 
-        return self.obs, self.last_reward, self.done, self.info
+        return {'execute_action':action}
 
     def reset(self):
         """重置环境并清除状态。"""

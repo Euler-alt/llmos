@@ -69,10 +69,8 @@ class ChatProgram(BaseProgram):
         user_prompt = prompt.get("user")
         response = self.llm_client.chat(user_prompt=user_prompt,system_prompt=system_prompt)
         calls = self.apply_response(response)
-
         # === 缓存记录 ===
         append_cache_record(CACHE_FILE,prompt, response)
-
         return {
             "snapshot": self.promptMainBoard.get_divided_snapshot(),
             "raw_response": response,
@@ -80,11 +78,15 @@ class ChatProgram(BaseProgram):
             "cache_index": None,
         }
 
+
     def apply_response(self, response:str):
         """解析模型回复，并执行其中的prompt调用"""
-        calls = parse_response(response)
-        for call in calls:
-            self.promptMainBoard.handle_call(call)
+        try:
+            calls = parse_response(response)
+            for call in calls:
+                self.promptMainBoard.handle_call(call)
+        except Exception as e:
+            self.promptMainBoard.record_execution("error", raw_response=response, error_message =  str(e))
         return calls
 
     def env_event(self, args,kwargs):

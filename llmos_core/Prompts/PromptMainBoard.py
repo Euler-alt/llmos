@@ -5,20 +5,93 @@ from typing import List
 from llmos_core.Prompts.Windows import BasePromptWindow,FlowStackPromptWindow
 from llmos_core.Prompts.Windows.BaseWindow import NullSystemWindow
 
+import json
+import re
+
+ALLOWEDKEYS = ["call_type", "func_name", "kwargs", 'reasoning']
+NEEDKEYS = ["call_type", "func_name"]
+
+import datetime
+from typing import Any, Dict
+
+
 
 def parse_response(response_text: str):
     """
-    解析大模型返回的 JSON-only 调用结果。
-    支持单个调用或数组。
+    尝试从任意包含 JSON 的字符串中提取并解析第一个合法的 JSON 结构。
+
+    1. 移除 Markdown 代码块标记（如 ```json...```）。
+    2. 遍历字符串，使用括号计数法找到最有可能的 JSON 结构的结束位置。
+    3. 解析提取的 JSON，并应用原始的结构验证（NEEDKEYS, ALLOWEDKEYS）。
+
     返回：list[dict] 格式，每个 dict 包含 call_type、func_name、kwargs。
     """
-    response_text = response_text.strip()
+    cleaned_text = response_text.strip()
 
-    # 尝试提取纯 JSON（防御模型输出中混入前后空白或格式符）
-    try:
-        data = json.loads(response_text)
-    except json.JSONDecodeError as e:
-        raise ValueError(f"模型输出不是合法 JSON：{e}\n输出内容:\n{response_text[:2000]}")
+    # 1. 尝试移除 Markdown 代码块标记，使查找起始字符更容易
+    match_md = re.search(r"```json\s*([\s\S]*?)\s*```", cleaned_text)
+    if match_md:
+        cleaned_text = match_md.group(1).strip()
+
+    # 2. 找到第一个 JSON 结构的起始位置
+    start_index = -1
+    for char in ['{', '[']:
+        idx = cleaned_text.find(char)
+        if idx != -1 and (start_index == -1 or idx < start_index):
+            start_index = idx
+
+    if start_index == -1:
+        raise ValueError("输入字符串中未找到 JSON 起始字符 '{' 或 '['。")
+
+    # 3. 使用栈/计数法找到 JSON 结构的结束位置
+
+    # 存储找到的 JSON 片段
+    json_candidates = []
+
+    for start_char in ['{', '[']:
+        try:
+            # 找到所有可能的起始位置
+            for match in re.finditer(re.escape(start_char), cleaned_text):
+                start_pos = match.start()
+                if start_pos < start_index:  # 只从第一个找到的起始符开始
+                    continue
+
+                open_char = start_char
+                close_char = '}' if start_char == '{' else ']'
+                balance = 0
+
+                # 从起始字符开始遍历，找到平衡的结束字符
+                for i in range(start_pos, len(cleaned_text)):
+                    char = cleaned_text[i]
+                    if char == open_char:
+                        balance += 1
+                    elif char == close_char:
+                        balance -= 1
+
+                    if balance == 0:
+                        # 找到平衡点，提取并尝试解析这个片段
+                        json_str = cleaned_text[start_pos: i + 1]
+
+                        # 尝试解析
+                        try:
+                            parsed_data = json.loads(json_str)
+                            # 如果解析成功，存储它
+                            json_candidates.append(parsed_data)
+                            # 找到第一个合法的 JSON 就立即退出外层循环
+                            raise StopIteration  # 使用异常跳出多层循环
+                        except json.JSONDecodeError:
+                            # 可能是非法的 JSON，或 JSON 内部有未转义的引号等，继续查找
+                            pass
+        except StopIteration:
+            break  # 成功找到并解析，跳出循环
+
+    if not json_candidates:
+        raise ValueError(f"字符串中未找到合法的 JSON 结构。尝试从位置 {start_index} 开始。")
+
+    # 优先使用第一个成功解析的候选
+    data = json_candidates[0]
+
+    # --- 4. 应用原有的结构验证逻辑 ---
 
     # 标准化为列表
     if isinstance(data, dict):
@@ -30,21 +103,29 @@ def parse_response(response_text: str):
     for idx, item in enumerate(data):
         if not isinstance(item, dict):
             raise ValueError(f"第 {idx} 个调用不是对象类型")
-        for key in item.keys():
-            if key not in ("call_type", "func_name", "kwargs"):
-                raise ValueError(f"非法字段: {key}")
-        if "call_type" not in item or "func_name" not in item:
-            raise ValueError(f"缺少必要字段: call_type 或 func_name")
-        if item["call_type"] != "prompt":
-            raise ValueError(f"不支持的 call_type: {item['call_type']}")
+
+        illegal = set(item) - set(ALLOWEDKEYS)
+        if illegal:
+            raise ValueError(f"非法字段: {', '.join(illegal)}")
+
+        missing = [k for k in NEEDKEYS if k not in item]
+        if missing:
+            raise ValueError(f"缺少必要字段: {', '.join(missing)}")
+
         kwargs = item.get("kwargs", {})
         if not isinstance(kwargs, dict):
             raise ValueError("kwargs 必须为字典类型")
-        calls.append({
+
+        call = {
             "call_type": item["call_type"],
             "func_name": item["func_name"],
             "kwargs": kwargs
-        })
+        }
+        if reasoning := item.get("reasoning"):
+            call["reasoning"] = reasoning
+
+        calls.append(call)
+
     return calls
 
 
@@ -97,24 +178,30 @@ class PromptMainBoard:
         self.system_window = system_window
         self.handlers.update(system_window.export_handlers() or {})
 
-    def handle_call(self, call):
+    def handle_call(self, call, auto_record=True):
         """统一分发到对应窗口的 handler"""
         func_name = call["func_name"]
         call_type = call["call_type"]
         kwargs = call["kwargs"]
+        reasoning = call.get("reasoning", '')
         if func_name in self.handlers:
             result = self.handlers[func_name](**kwargs)
-            self.record_handle(call_type,func_name,result,**kwargs)
+            if auto_record:
+                self.record_execution(call_type, func_name=func_name, result=result, reasoning=reasoning, **kwargs)
             return result
         else:
             return {"status": "error", "reason": f"handler not found: {func_name}"}
 
-    def record_handle(self, call_type,func_name, result, **kwargs):
+    def record_execution(self, event_type,**kwargs):
+        """
+        记录一次正常调用
+        :param event_type:
+        :param kwargs:
+        :return:
+        """
         for window in self.windows:
             if isinstance(window, FlowStackPromptWindow):
-                frame = window.stack[-1]
-                Instruction = frame["instruction"]
-                window.auto_record_action(Instruction,call_type,func_name, result, **kwargs)
+                window.record_event(event_type=event_type, **kwargs)
 
     def get_divided_snapshot(self):
         divided_snap_shot = {}

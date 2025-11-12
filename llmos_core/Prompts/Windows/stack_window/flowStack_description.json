@@ -81,26 +81,16 @@
     "display_format": "Function <frame_name>: <frame_description>\nVariables: <variables-as-json>\n-> INSTRUCTION: <instruction>\n\n[Execution History - 你是如何走到这一步的]\n  Step #N-2: <instruction> → <result>\n             Reasoning: <reason>\n  Step #N-1: <instruction> → <result>\n             Reasoning: <reason>\n  (当前 INSTRUCTION 是基于以上历史做出的下一步决策)\n\n[Tried and Failed - 已知无效的路径]\n  - <instruction>: <result> (步骤 #N)"
   },
   "constraints": [
-    "**【强制推理】**: 每次调用 stack_set_instruction 必须提供 'reason' 和 'last_result'。reason 必须解释为什么选择这个新指令，以及它与上一步有何不同。如果写不出不同点，说明可能陷入循环，应考虑 stack_replace 或 stack_pop。",
-
-    "**【循环检测】**: 系统会自动检测最近5步内是否出现重复指令。如果检测到循环，stack_set_instruction 会返回错误，告知你该指令之前在哪一步尝试过、结果如何。此时你必须：\n  1. 分析为什么之前失败\n  2. 如果有新信息或新方法，用 reason 解释清楚\n  3. 如果确实无路可走，调用 stack_pop 或 stack_replace",
 
     "**【历史可见性】**: 每次调用时，你都能看到当前栈帧最近3-5步的执行历史，包括每一步的指令、结果和推理。利用这些信息来避免重复失败的路径。",
-
     "**【任务推进原则】**: 每一轮执行必须让任务有实质性进展。'进展'可以是：\n  - 获得了新信息\n  - 改变了环境状态\n  - 排除了一个错误方案\n  - 发现了新的可能性\n  如果连续2-3轮都没有新进展，应考虑改变策略（stack_replace）或放弃任务（stack_pop）。",
-
     "**【指令表达要求】**: INSTRUCTION 必须是具体的、可执行的动作，例如：\n  ✓ '打开冰箱检查是否有苹果'\n  ✓ '用找到的钥匙尝试开柜子'\n  ✓ '前往卧室搜索抽屉'\n  ✗ '继续寻找' (太模糊)\n  ✗ '保持探索' (无具体动作)\n  ✗ '应该快完成了' (这是总结不是指令)",
-
-    "**【三振出局法则】**: 如果同一个子任务的步骤数 > 10 步，或者连续3次 stack_set_instruction 都返回循环检测错误，说明当前策略已失效，必须：\n  - 调用 stack_replace 彻底改变策略，或\n  - 调用 stack_pop(result='failed') 承认失败并返回父任务重新规划",
-
     "**【任务完成判定】**: 当以下任一情况发生时，必须调用 stack_pop：\n  - 任务目标已达成\n  - 已确认无法完成（如所需物品不存在）\n  - 陷入死循环且无新策略\n  不要让任务无限循环下去。",
-
     "**【父子任务衔接】**: 子任务通过 stack_pop(result=...) 返回结果后，父任务会收到该结果并继续执行。子任务 pop 后不得再设置 INSTRUCTION。"
   ],
   "internal_mechanism": {
     "note": "以下内容仅用于理解系统工作原理，无需在调用时处理",
     "auto_history_tracking": "每次调用 stack_set_instruction 时，系统会自动将当前的 instruction、last_result 和 reason 存入 action_history 数组，并更新 step_counter。",
-    "loop_detection": "系统会检查新指令是否在 action_history 的最近5条记录中出现过。如果出现，返回错误并提示之前的尝试结果。",
     "history_display": "只显示最近3-5步的历史，避免 prompt 过长。更早的历史仍然存储，用于循环检测。",
     "step_counter": "每个栈帧维护独立的步骤计数器，从1开始递增，用于标识每一步在任务中的位置。"
   }

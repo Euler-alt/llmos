@@ -1,0 +1,53 @@
+{
+  "name": "异常窗口",
+  "description": "异常窗口是专门用于记录和管理大模型回复过程中产生的各种异常信息的模块。它提供异常记录、查询、统计和修复建议等功能，帮助系统更好地处理大模型交互中的错误情况。",
+  "functions": [
+    {
+      "name": "error_record",
+      "description": "记录新的异常信息，包括异常类型、错误消息和上下文信息"
+    },
+    {
+      "name": "error_query", 
+      "description": "查询异常记录，支持按类型过滤和数量限制"
+    },
+    {
+      "name": "error_clear",
+      "description": "清理异常记录，可以清理所有记录或指定时间之前的记录"
+    },
+    {
+      "name": "error_statistics",
+      "description": "获取异常统计信息，包括总异常数、按类型分布等"
+    },
+    {
+      "name": "error_suggest_fix",
+      "description": "获取特定异常的修复建议，基于异常类型提供针对性建议"
+    }
+  ],
+  "error_types": [
+    {
+      "type": "parse_error",
+      "description": "解析错误 - 大模型输出格式不符合预期"
+    },
+    {
+      "type": "timeout_error", 
+      "description": "超时错误 - 大模型响应超时"
+    },
+    {
+      "type": "rate_limit",
+      "description": "频率限制 - API调用频率超出限制"
+    },
+    {
+      "type": "content_filter",
+      "description": "内容过滤 - 输入内容被过滤系统拦截"
+    },
+    {
+      "type": "model_error", 
+      "description": "模型错误 - 大模型服务内部错误"
+    },
+    {
+      "type": "unknown",
+      "description": "未知错误 - 其他未分类的异常"
+    }
+  ],
+  "usage": "在系统运行过程中，当大模型回复产生异常时，可以调用error_record函数记录异常信息。系统管理员可以通过其他函数查询异常记录、获取统计信息和修复建议。"
+}

@@ -212,7 +212,7 @@ const App = () => {
           response: { answer: manualResponse},
           windows: {...windows}
         }]);
-        setLlmOutput({"answer":"zero", "raw_response": manualResponse,
+        setLlmOutput({"answer": manualResponse, "raw_response": manualResponse,
         "parsed_calls": res.json()})
         // 清空输入框
         setManualResponse('');

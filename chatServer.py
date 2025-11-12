@@ -5,9 +5,6 @@ from pydantic import BaseModel
 from typing import Dict, List, Any, Optional
 import asyncio
 import json
-from pathlib import Path
-from llmos_core.Program.context_program import ContextProgram
-from llmos_core.Program.ALFworldProgram import ALFworldProgram
 from llmos_core.Program.chatProgram import ChatProgram
 app = FastAPI()
 
@@ -288,7 +285,7 @@ async def call_llm(data: LLMPrompt):
     # 广播更新
     await backend_state.broadcast_update()
 
-    answer = f"这是模拟 LLM 的响应，收到的 prompt 长度: {len(prompt)}"
+    answer = result.get("raw_response", "")
     print("finish a call")
 
     return {

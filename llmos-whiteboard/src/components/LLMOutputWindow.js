@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 
 const LLMOutputWindow = ({ result, darkMode }) => {
   const [isUpdated, setIsUpdated] = useState(false);
-  const [activeTab, setActiveTab] = useState('answer');
+  const [activeTab, setActiveTab] = useState('raw');
   const [isCopied, setIsCopied] = useState(false);
 
   useEffect(() => {
     if (!result) return;
     setIsUpdated(true);
-    setActiveTab('answer'); // 新结果时默认显示答案标签页
+    setActiveTab('raw'); // 新结果时默认显示答案标签页
     const timer = setTimeout(() => setIsUpdated(false), 500); // 500ms 高亮
     return () => clearTimeout(timer);
   }, [result]);

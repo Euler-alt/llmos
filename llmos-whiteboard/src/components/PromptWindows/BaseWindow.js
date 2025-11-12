@@ -213,22 +213,26 @@ export const WindowContent = ({ children }) => (
 
 // 3.4. 通用文本框 (TextBox)
 // 负责提供统一的输入框样式，通过 focusRingClass 接收主题聚焦环颜色。
-export const TextBox = ({ value, onChange, darkMode, placeholder, rows, focusRingClass,maxHeight = 200 }) => {
+export const TextBox = ({ value, onChange, darkMode, placeholder, rows, focusRingClass, maxHeight = 200, isMaximized = false }) => {
 
   const textAreaRef = useRef(null);
+  
+  // 根据是否放大动态调整最大高度
+  const actualMaxHeight = isMaximized ? 600 : maxHeight; // 放大后设置为600px，正常状态200px
+
   useEffect(() => {
       const el = textAreaRef.current;
       if (!el) return;
       el.style.height = 'auto'; // 每次刷新先重置
       const desired = el.scrollHeight;
-      if (desired <= maxHeight) {
+      if (desired <= actualMaxHeight) {
       el.style.height = `${desired}px`;
       el.style.overflowY = 'hidden';
     } else {
-      el.style.height = `${maxHeight}px`;
+      el.style.height = `${actualMaxHeight}px`;
       el.style.overflowY = 'auto';
     }
-  }, [value, maxHeight]);
+  }, [value, actualMaxHeight]);
 
   return (
     <textarea
@@ -357,6 +361,7 @@ export const BaseWindow = ({ data, onUpdate, darkMode, windowConfig}) => {
             placeholder="输入代码窗口的meta信息..."
             rows={isMaximized ? 20 : 6}
             focusRingClass={focusRingClass} // 传入 focusRingClass
+            isMaximized={isMaximized} // 传递放大状态
           />
         )}
 
@@ -368,6 +373,7 @@ export const BaseWindow = ({ data, onUpdate, darkMode, windowConfig}) => {
             placeholder={`输入代码...`}
             rows={isMaximized ? 20 : 8}
             focusRingClass={focusRingClass} // 传入 focusRingClass
+            isMaximized={isMaximized} // 传递放大状态
           />
         )}
       </WindowContent>
