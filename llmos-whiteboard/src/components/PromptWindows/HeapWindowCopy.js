@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {BaseWindow,SUPPORTED_THEMES} from "./BaseWindow";
+import {BaseWindow} from "./BaseWindow";
+import {SUPPORTED_THEMES} from "./Theme";
 const HeapWindow = ({ data, onUpdate, darkMode }) => {
   const [isUpdated, setIsUpdated] = useState(false);
   const [activeTab, setActiveTab] = useState('state');

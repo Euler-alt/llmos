@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
+import {event_call} from "../../api/api";
 
-const ChatWindow = ({ data, onUpdate, windowConfig,darkMode }) => {
+const chatWindow_func = 'user_response' //魔法字符串，和后端chat_window对应
+const ChatWindow = ({ data, windowConfig,darkMode }) => {
   const [isUpdated, setIsUpdated] = useState(false);
   // activeTab 现在只用于 Meta/State 的切换
   const [activeTab, setActiveTab] = useState('state');
@@ -39,21 +41,9 @@ const ChatWindow = ({ data, onUpdate, windowConfig,darkMode }) => {
 
     // 3. 通知父组件/后端进行状态更新 (不再期望返回值)
     try {
-      // 假设 onUpdate 只是一个通知函数，用于更新外部状态
-      // 我们不再等待 res.json()，只调用它。
-      await onUpdate("user_response", { text: userMsg.text });
-
-      // 注意：如果 onUpdate 确实返回了一个 Promise/Response，
-      // 但您不需要解析它，可以继续使用 await，但不需要处理返回值。
-
-      // 4. (可选) 如果需要通知外部完整的聊天记录，可以在这里做：
-      // onUpdate("chat", { messages: [...messages, userMsg] });
-      // ⚠️ 这一步可能会造成 messages 的异步问题，建议父组件自行监听 messages 变化。
-
-      // 由于您的业务逻辑只是改变状态栏的值，所以不需要 botMsg 的逻辑。
-
+      await event_call(chatWindow_func, { text: userMsg.text });
     } catch (err) {
-      console.error("发送消息到 onUpdate 失败:", err);
+      console.error("发送消息到 event_call 失败:", err);
       // 即使发送失败，用户消息仍然保留在界面上，但我们可以添加一个系统提示
       setMessages(prev => [...prev, {
           role: "system",
@@ -189,7 +179,7 @@ const ChatWindow = ({ data, onUpdate, windowConfig,darkMode }) => {
                       }
                     `}
                     value={meta || ''}
-                    onChange={(e) => onUpdate('text', { ...data, meta: e.target.value })}
+                    onChange={(e) => event_call('text', { ...data, meta: e.target.value })}
                     rows="4"
                     placeholder="输入文本窗口的meta信息..."
                     spellCheck="false"
@@ -217,7 +207,7 @@ const ChatWindow = ({ data, onUpdate, windowConfig,darkMode }) => {
                       }
                     `}
                     value={state || ''}
-                    onChange={(e) => onUpdate('text', { ...data, state: e.target.value })}
+                    onChange={(e) => event_call('text', { ...data, state: e.target.value })}
                     rows="4"
                     placeholder="输入文本窗口的state信息..."
                     spellCheck="false"

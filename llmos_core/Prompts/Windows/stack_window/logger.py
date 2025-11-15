@@ -20,13 +20,14 @@ class LogEvent:
         if template:
             try:
                 return f"[{self.timestamp}] [{self.level}] " + template.format(**self.data)
-            except Exception:
+            except KeyError:
                 return f"[{self.timestamp}] [{self.level}] {self.event_type}: {self.data}"
         else:
             return f"[{self.timestamp}] [{self.level}] {self.event_type}: {self.data}"
 
-LogEvent.register("prompt", "调用 {func} → {result}")
-LogEvent.register("error", "❌ {error}")
-LogEvent.register("tool", "调用 {func} → {result}")
+LogEvent.register("prompt", "调用 {func_name},reasoning:{reasoning} → {result}")
+LogEvent.register("error", "raw_response:{raw_response} →❌ {error}")
+LogEvent.register("tool", "调用 {func_name},reasoning:{reasoning} → {result}")
+LogEvent.register("event_call", "调用 {func_name}")
 
 

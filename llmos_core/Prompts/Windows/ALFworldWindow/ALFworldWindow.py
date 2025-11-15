@@ -1,4 +1,4 @@
-from llmos_core.Prompts.Windows.BaseWindow.BaseWindow import BasePromptWindow
+from llmos_core.Prompts.Windows.BaseWindow import BasePromptWindow
 from alfworld.agents.environment import get_environment
 import yaml
 import os
@@ -46,7 +46,7 @@ class ALFworldWindow(BasePromptWindow):
 
     def forward(self, *args, **kwargs):
         """主入口，返回完整的 Meta 和 State Prompt。"""
-        return f"{self.export_meta_prompt()}\n{self.export_state_prompt()}"
+        return super().forward()
 
     def export_meta_prompt(self) -> str:
         """定义大模型的角色和工具调用说明。"""

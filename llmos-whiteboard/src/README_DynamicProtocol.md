@@ -33,7 +33,7 @@ import DynamicWindowFactory from './DynamicWindowFactory';
 <DynamicWindowFactory
     windowConfigs={windowConfigs}  // 后端配置的窗口列表
     windowsData={windows}          // 窗口数据
-    onUpdate={handleUpdate}        // 更新回调
+    onEvent_call={handleEventCall}        // 更新回调
     darkMode={darkMode}            // 主题模式
 />
 ```
@@ -167,7 +167,7 @@ const isValid = validateBackendConfig(backendConfig);
 ### 创建自定义组件
 
 ```javascript
-const CustomComponent = ({ data, onUpdate, darkMode }) => {
+const CustomComponent = ({ data, onEvent_call, darkMode }) => {
   // 接收配置信息
   const { config } = data || {};
   

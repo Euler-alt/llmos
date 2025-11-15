@@ -42,7 +42,7 @@ class BasePromptWindow(ABC):
                 f"{self.export_meta_prompt()}\n"
                 f"STATE:\n"
                 f"{self.export_state_prompt()}]\n"
-                f"<WINDOW START: {self.window_name}>\n")
+                f"<WINDOW END: {self.window_name}>\n")
 
     @classmethod
     def register(cls, *window_names):

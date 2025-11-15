@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import List, Dict, Any
 
-from llmos_core.Prompts.Windows.BaseWindow.BaseWindow import BasePromptWindow
+from llmos_core.Prompts.Windows.BaseWindow import BasePromptWindow
 from llmos_core.Prompts.Windows.stack_window.logger import LogEvent
 
 META_DIR = Path(__file__).parent
@@ -68,7 +68,7 @@ class Frame:
         kwargs["step"] = self.step_counter
         return self.logger.log(level, event_type, **kwargs)
 
-    def render_summary(self):
+    def render_text(self):
         """渲染当前帧的简短状态描述"""
         lines = [f"Function {self.name}: {self.description}"]
         if self.variables:
@@ -101,10 +101,10 @@ class FlowStackPromptWindow(BasePromptWindow):
         self._init_root_frame()
 
     def forward(self, *args, **kwargs):
-        super().forward(*args, **kwargs)
+        return super().forward(*args, **kwargs)
 
     def _init_root_frame(self):
-        root = Frame("ROOT", "主任务根帧（永不弹出）", is_root=True)
+        root = Frame("ROOT", "主任务根帧（永不弹出）")
         self.stack.append(root)
 
     # === 栈操作 ===
@@ -144,7 +144,7 @@ class FlowStackPromptWindow(BasePromptWindow):
 
     # === 状态导出 ===
     def export_state_prompt(self):
-        return "### STACK DATA ###\n" + "\n\n".join(f.export_text() for f in self.stack)
+        return "### STACK DATA ###\n" + "\n\n".join(f.render_text() for f in self.stack)
 
     def export_meta_prompt(self):
         return f"{self.description}\n"

@@ -1,4 +1,4 @@
-from llmos_core.Prompts.Windows.BaseWindow.BaseWindow import BasePromptWindow
+from llmos_core.Prompts.Windows.BaseWindow import BasePromptWindow
 from pathlib import Path
 import json
 

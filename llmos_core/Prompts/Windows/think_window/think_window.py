@@ -1,4 +1,4 @@
-from llmos_core.Prompts.Windows.BaseWindow.BaseWindow import BasePromptWindow
+from llmos_core.Prompts.Windows.BaseWindow import BasePromptWindow
 from pathlib import Path
 import json
 Meta_dir = Path(__file__).parent
@@ -13,7 +13,7 @@ class ThinkWindow(BasePromptWindow):
         self.think_content = None
 
     def forward(self):
-        return f"{self.export_meta_prompt()}{self.export_state_prompt()}"
+        return super().forward()
 
 
     def export_meta_prompt(self) ->str:

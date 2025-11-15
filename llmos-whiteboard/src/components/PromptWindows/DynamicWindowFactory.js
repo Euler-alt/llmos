@@ -11,10 +11,9 @@ import { getComponent, getComponentConfig } from './ComponentRegistry';
  * @param {Object} props
  * @param {Object} props.config - 窗口配置
  * @param {Object} props.data - 窗口数据
- * @param {Function} props.onUpdate - 更新回调
  * @param {boolean} props.darkMode - 暗黑模式
  */
-const DynamicWindow = ({ config, data, onUpdate, darkMode }) => {
+const DynamicWindow = ({ config, data, darkMode }) => {
   const Component = getComponent(config.windowType);
   
   if (!Component) {
@@ -44,7 +43,6 @@ const DynamicWindow = ({ config, data, onUpdate, darkMode }) => {
   return (
     <Component 
       data={data}
-      onUpdate={onUpdate}
       darkMode={darkMode}
       windowConfig = {componentConfig}
     />
@@ -56,10 +54,10 @@ const DynamicWindow = ({ config, data, onUpdate, darkMode }) => {
  * @param {Object} props
  * @param {Array} props.windowConfigs - 窗口配置数组
  * @param {Object} props.windowsData - 窗口数据对象
- * @param {Function} props.onUpdate - 更新回调
+ * @param {Function} props. onEventCall - 前端用户事件回调
  * @param {boolean} props.darkMode - 暗黑模式
  */
-const DynamicWindowFactory = ({ windowConfigs = [], windowsData = {}, onUpdate, darkMode }) => {
+const DynamicWindowFactory = ({ windowConfigs = [], windowsData = {}, darkMode }) => {
   if (!Array.isArray(windowConfigs) || windowConfigs.length === 0) {
     return (
       <div className={`
@@ -82,7 +80,6 @@ const DynamicWindowFactory = ({ windowConfigs = [], windowsData = {}, onUpdate, 
           key={windowConfig.windowId || `${windowConfig.windowType}-${index}`}
           config={windowConfig}
           data={windowsData[windowConfig.windowTitle] || {}}
-          onUpdate={onUpdate}
           darkMode={darkMode}
         />
       ))}

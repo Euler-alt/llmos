@@ -1,8 +1,7 @@
-from llmos_core.Prompts.Windows.BaseWindow.BaseWindow import BasePromptWindow
+from llmos_core.Prompts.Windows.BaseWindow import BasePromptWindow
 from pathlib import Path
 from typing import List, Dict, Any
 from datetime import datetime
-import json
 
 META_DIR = Path(__file__).parent
 META_FILE = META_DIR / 'error_description.json'

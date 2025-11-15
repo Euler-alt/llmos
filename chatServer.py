@@ -108,7 +108,7 @@ class BackendState:
         self.subscribers: List[asyncio.Queue] = []
 
     def update_snapshot(self):
-        snapshot = program.get_prompt_snapshot()
+        snapshot = program.get_prompt_divided_snapshot()
         for key in self.window_data:
             if key in snapshot.keys():
                 self.window_data[key] = snapshot[key]
@@ -152,12 +152,12 @@ async def get_windows():
 
 
 # POST 接口：按照api更新模块数据
-@app.post("/api/windows/update")
-async def update_window(request: Request):
+@app.post("/api/windows/event_call")
+async def event_call_window(request: Request):
     data = await request.json()
     args = data.get("args")
     kwargs = data.get("kwargs")
-    program.env_event(args, kwargs)
+    program.env_event(args, **kwargs)
     backend_state.update_snapshot()
     await backend_state.broadcast_update()
 

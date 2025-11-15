@@ -1,7 +1,6 @@
 import pathlib
 
-from llmos_core.Prompts.Windows.BaseWindow.BaseWindow import BasePromptWindow
-from pathlib import Path
+from llmos_core.Prompts.Windows.BaseWindow import BasePromptWindow
 
 TEXT_DIR = pathlib.Path(__file__).parent
 KERNEL_FILE = TEXT_DIR / 'kernel_description.md'

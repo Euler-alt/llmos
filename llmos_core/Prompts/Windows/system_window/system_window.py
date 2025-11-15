@@ -1,4 +1,4 @@
-from llmos_core.Prompts.Windows.BaseWindow.BaseWindow import BasePromptWindow
+from llmos_core.Prompts.Windows.BaseWindow import BasePromptWindow
 from llmos_core.Prompts.Windows.heap_window.heap_window import HeapPromptWindow
 from llmos_core.Prompts.Windows.stack_window.stack_window import StackPromptWindow
 from llmos_core.Prompts.Windows.static_window.static_window import KernelPromptWindow,CodePromptWindow

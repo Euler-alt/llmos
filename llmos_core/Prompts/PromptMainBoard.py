@@ -137,14 +137,13 @@ class PromptMainBoard:
         self.handlers = {}
 
     def assemble_prompt(self):
-        """
-        拼接所有模块的 forward() 输出
-        """
-        ret_message = {
-            "system": self.system_window.forward(),
-            "user":"\n".join(m.forward() for m in self.windows)
+        user_prompts = "".join([window.forward() for window in self.windows])
+        systemMessage = self.system_window.forward()
+
+        return {
+            "system": systemMessage,
+            "user": user_prompts  # ← 不加分隔符自然拼接
         }
-        return ret_message
 
     def register_windows(self, windows: List[BasePromptWindow] | BasePromptWindow=NullSystemWindow(),system_window:BasePromptWindow=NullSystemWindow()):
         """注册模块"""
@@ -154,22 +153,22 @@ class PromptMainBoard:
         if windows:
             # 1. 检查是否为可迭代对象（列表、元组等）
             if isinstance(windows, Iterable):
-                modules_to_register = windows
+                windows_to_register = windows
             else:
                 # 2. 否则，视为单个模块实例
-                modules_to_register = [windows]
+                windows_to_register = [windows]
 
             # 遍历所有需要注册的模块
-            for module in modules_to_register:
+            for window in windows_to_register:
                 # 简化类型检查：可以添加更严格的检查，确保是 BasePromptWindow 的子类
                 # if not isinstance(module, BasePromptWindow):
                 #     raise TypeError("Registered item must be a Prompt Window module.")
 
-                self.windows.append(module)
+                self.windows.append(window)
 
                 # 尝试更新 handlers
                 # 假设每个 module 都有 export_handlers 方法
-                self.handlers.update(module.export_handlers() or {})
+                self.handlers.update(window.export_handlers() or {})
 
             if system_window:
                 self.register_system_window(system_window)
@@ -185,12 +184,29 @@ class PromptMainBoard:
         kwargs = call["kwargs"]
         reasoning = call.get("reasoning", '')
         if func_name in self.handlers:
-            result = self.handlers[func_name](**kwargs)
-            if auto_record:
-                self.record_execution(call_type, func_name=func_name, result=result, reasoning=reasoning, **kwargs)
-            return result
+            try:
+                result = self.handlers[func_name](**kwargs)
+                if auto_record:
+                    self.record_execution(call_type, func_name=func_name, result=result, reasoning=reasoning, **kwargs)
+                return result
+            except Exception as e:
+                if auto_record:
+                    self.record_execution('error', func_name=func_name, reasoning=reasoning,exception_message=str(e),**kwargs)
+                return {"status": "error", "reason": f"handler not found: {str(e)}"}
         else:
             return {"status": "error", "reason": f"handler not found: {func_name}"}
+
+    def apply_response(self, response:str,auto_record=True):
+        """解析模型回复，并执行其中的prompt调用"""
+        calls = []
+        try:
+            calls = parse_response(response)
+            for call in calls:
+                self.handle_call(call,auto_record)
+        except Exception as e:
+            if auto_record:
+                self.record_execution("error", raw_response=response, error_message =  str(e))
+        return calls
 
     def record_execution(self, event_type,**kwargs):
         """
