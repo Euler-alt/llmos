@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import List, Dict, Any
 
 from llmos_core.Prompts.Windows.BaseWindow import BasePromptWindow
-from llmos_core.Prompts.Windows.stack_window.logger import LogEvent
+from llmos_core.Prompts.logger import LogEvent
 
 META_DIR = Path(__file__).parent
 META_FILE = META_DIR / 'flowStack_description.json'
@@ -17,23 +17,14 @@ class FrameLogger:
         self.records: List[LogEvent] = []
         self.maxlen = maxlen
 
-    def log(self, level: str, event_type: str, **kwargs):
+    def log(self, event_type: str, **kwargs):
         """记录一次事件"""
-        event = LogEvent(level, event_type, **kwargs)
+        event = LogEvent(event_type, **kwargs)
         self.records.append(event)
         if len(self.records) > self.maxlen:
             self.records.pop(0)
         print(event.render())  # 你也可以换成写文件、消息总线等
         return event
-
-    def info(self, event_type: str, **kwargs):
-        return self.log("info", event_type, **kwargs)
-
-    def warning(self, event_type: str, **kwargs):
-        return self.log("warning", event_type, **kwargs)
-
-    def error(self, event_type: str, **kwargs):
-        return self.log("error", event_type, **kwargs)
 
     def render_recent(self, n=3):
         """渲染最近几条记录"""
@@ -62,11 +53,11 @@ class Frame:
         # ✅ 每个帧都自带日志记录器
         self.logger = FrameLogger(name=self.name)
 
-    def record_event(self, event_type: str, level="info", **kwargs):
+    def record_event(self, event_type: str, **kwargs):
         """在当前帧内记录事件"""
         self.step_counter += 1
         kwargs["step"] = self.step_counter
-        return self.logger.log(level, event_type, **kwargs)
+        return self.logger.log(event_type, **kwargs)
 
     def render_text(self):
         """渲染当前帧的简短状态描述"""
@@ -85,7 +76,7 @@ class Frame:
     def set_variables(self, **kwargs):
         self.variables.update(kwargs)
 
-    def set_instruction(self, instruction=''):
+    def set_instruction(self, instruction='',**kwargs):
         self.instruction = instruction
 
 # ========== 【主窗口类：FlowStackPromptWindow】 ==========
@@ -112,10 +103,11 @@ class FlowStackPromptWindow(BasePromptWindow):
         name = kwargs.get("name")
         desc = kwargs.get("description")
         inst = kwargs.get("instruction")
+        ret_key = kwargs.get("ret_key")
         if not desc or not inst:
             return {"status": "error", "reason": "stack_push requires 'description' and 'instruction'"}
 
-        frame = Frame(name or f"task_{len(self.stack)}", desc, inst, kwargs.get("variables", {}))
+        frame = Frame(name or f"task_{len(self.stack)}", desc, kwargs.get("variables", {}),inst,ret_key=ret_key)
         self.stack.append(frame)
         return {"status": "ok", "stack_size": len(self.stack)}
 
@@ -125,12 +117,16 @@ class FlowStackPromptWindow(BasePromptWindow):
         popped = self.stack.pop()
         result = kwargs.get("result")
         ret_key = kwargs.get("ret_key")
+        if not ret_key:
+            ret_key = popped.ret_key or None
         if ret_key and result is not None and self.stack:
             self.stack[-1].variables[ret_key] = result
+        else:
+            self.stack[-1].variables[f'子帧{popped.name} pop with:'] = None
         return {"status": "ok", "message": f"Frame '{popped.name}' completed"}
 
     # === 调用记录接口（代理给 Frame） ===
-    def record_event(self, event_type, level="info", **kwargs):
+    def record_event(self, event_type, **kwargs):
         """
 
         :param event_type:
@@ -140,7 +136,7 @@ class FlowStackPromptWindow(BasePromptWindow):
         """
         if not self.stack:
             return {"status": "error", "reason": "no active frame"}
-        return self.stack[-1].record_event(event_type, level, **kwargs)
+        return self.stack[-1].record_event(event_type, **kwargs)
 
     # === 状态导出 ===
     def export_state_prompt(self):

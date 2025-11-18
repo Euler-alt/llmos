@@ -1,7 +1,7 @@
 {
   "window": "ALFWorldWindow",
   "description": "ALFWorld 模块提供了一个基于文本的具身智能体环境，代理可以在家庭环境中执行任务，通过动作与环境交互。",
-  "call_type": "prompt",
+  "call_type": "tool",
   "functions": [
     {
       "name": "ALF_step",
@@ -16,7 +16,7 @@
         "info": "dict (包含任务进度、库存等额外信息)"
       },
       "example_call": {
-        "call_type": "prompt",
+        "call_type": "tool",
         "func_name": "ALF_step",
         "kwargs": {"action": "go to kitchen"}
       }
@@ -30,7 +30,7 @@
         "info": "dict (初始任务信息)"
       },
       "example_call": {
-        "call_type": "prompt",
+        "call_type": "tool",
         "func_name": "ALF_reset",
         "kwargs": {}
       }
@@ -57,11 +57,11 @@
   "usage_examples": [
     {
       "action": "执行环境动作",
-      "call": {"call_type": "prompt", "func_name": "ALF_step", "kwargs": {"action": "take apple from table"}}
+      "call": {"call_type": "tool", "func_name": "ALF_step", "kwargs": {"action": "take apple from table"}}
     },
     {
       "action": "重置环境",
-      "call": {"call_type": "prompt", "func_name": "ALF_reset", "kwargs": {}}
+      "call": {"call_type": "tool", "func_name": "ALF_reset", "kwargs": {}}
     }
   ],
   "notes": [

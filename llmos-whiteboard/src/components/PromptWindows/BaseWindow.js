@@ -8,7 +8,7 @@ import {event_call} from "../../api/api";
  */
 export const BaseWindow = ({ data, darkMode, windowConfig}) => {
   const [isMaximized, setIsMaximized] = useState(false);
-  const [activeTab, setActiveTab] = useState('meta');
+  const [activeTab, setActiveTab] = useState('state');
   const [isUpdated, setIsUpdated] = useState(false);
 
   const metaTextareaRef = useRef(null);

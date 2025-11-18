@@ -1,46 +1,92 @@
 from pathlib import Path
 import json
 
-def load_cache_result(result_path=None):
-    """逐条加载缓存结果（生成器版）"""
-    result_path = Path(result_path) if result_path else Path(CACHE_FILE)
-    if not result_path.exists():
-        print(f"[cache] 缓存文件 {result_path} 不存在，返回空生成器。")
-        return
-    with open(result_path, "r") as f:
+
+class CacheManager:
+    """
+    管理缓存加载、迭代和写入。
+    提供：
+        - next_record()       获取下一条缓存
+        - append_record()     追加新的缓存记录
+        - reset()             重置迭代器
+    """
+
+    def __init__(self, cache_file: Path,clear_cache_file: bool = True):
+        self.cache_file = cache_file
+        self._iter = None
+        self._index = -1
+        if clear_cache_file:
+            self.clear()
+
+    def clear(self):
+        """真正执行清空缓存的动作"""
+        self.cache_file.parent.mkdir(exist_ok=True)
+        with open(self.cache_file, "w", encoding="utf8") as f:
+            json.dump([], f, indent=2, ensure_ascii=False)
+        self.reset()
+
+    # === 内部方法 ===
+    def _load_cache(self):
+        """加载整个缓存文件为列表"""
+        if not self.cache_file.exists():
+            return []
+
         try:
-            result = json.load(f)
+            with open(self.cache_file, "r", encoding="utf8") as f:
+                data = json.load(f)
+            if isinstance(data, list):
+                return data
+            else:
+                print(f"[cache] 非列表格式缓存，忽略 {self.cache_file}")
+                return []
         except json.JSONDecodeError:
-            print(f"[cache] 文件损坏或格式错误：{result_path}")
-            return
-    if not isinstance(result, list):
-        print(f"[cache] 非列表格式缓存，忽略。")
-        return
-    for i, record in enumerate(result):
-        yield {
+            print(f"[cache] 缓存损坏 {self.cache_file}")
+            return []
+
+    # === 对外的方法 ===
+    def reset(self):
+        """重置缓存迭代器"""
+        self._iter = None
+        self._index = -1
+
+    def next_record(self):
+        """
+        生成器形式读取缓存，返回：
+        {
             "index": i,
-            "prompt": record.get("prompt"),
-            "response": record.get("response"),
-            "meta": record.get("meta", {}),
+            "prompt": {...},
+            "response": {...},
+            "meta": {}
+        }
+        或 None（没有更多缓存）
+        """
+        # 初始化迭代器
+        if self._iter is None:
+            data = self._load_cache()
+            self._iter = iter(data)
+
+        try:
+            raw = next(self._iter)
+        except StopIteration:
+            self.reset()
+            return None
+
+        self._index += 1
+        return {
+            "index": self._index,
+            "prompt": raw.get("prompt"),
+            "response": raw.get("response"),
         }
 
+    def append_record(self, prompt, response):
+        """将一次交互追加到缓存文件中"""
+        data = self._load_cache()
 
-def append_cache_record(cache_file, prompt, response):
-    """把一次交互追加到缓存文件"""
-    cache_file.parent.mkdir(exist_ok=True)
-    try:
-        if cache_file.exists():
-            with open(cache_file, "r") as f:
-                data = json.load(f)
-        else:
-            data = []
-    except json.JSONDecodeError:
-        data = []
+        data.append({
+            "prompt": prompt,
+            "response": response,
+        })
 
-    data.append({
-        "prompt": prompt,
-        "response": response,
-    })
-
-    with open(cache_file, "w") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
+        self.cache_file.parent.mkdir(exist_ok=True)
+        with open(self.cache_file, "w", encoding="utf8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)

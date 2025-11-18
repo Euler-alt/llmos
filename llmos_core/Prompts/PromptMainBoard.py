@@ -11,8 +11,7 @@ import re
 ALLOWEDKEYS = ["call_type", "func_name", "kwargs", 'reasoning']
 NEEDKEYS = ["call_type", "func_name"]
 
-import datetime
-from typing import Any, Dict
+from enum import Enum
 
 
 
@@ -187,6 +186,7 @@ class PromptMainBoard:
             try:
                 result = self.handlers[func_name](**kwargs)
                 if auto_record:
+                    # todo，这里会引发bug
                     self.record_execution(call_type, func_name=func_name, result=result, reasoning=reasoning, **kwargs)
                 return result
             except Exception as e:
@@ -218,6 +218,7 @@ class PromptMainBoard:
         for window in self.windows:
             if isinstance(window, FlowStackPromptWindow):
                 window.record_event(event_type=event_type, **kwargs)
+                break
 
     def get_divided_snapshot(self):
         divided_snap_shot = {}

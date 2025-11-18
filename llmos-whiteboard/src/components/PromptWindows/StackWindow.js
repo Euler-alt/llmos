@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import {BaseWindow} from "./BaseWindow";
-import {SUPPORTED_THEMES} from "./Theme";
 
 const StackWindow = ({ data, onUpdate, darkMode,windowConfig }) => {
   return (

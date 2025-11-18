@@ -31,11 +31,9 @@
     },
     {
       "name": "stack_set_instruction",
-      "description": "更新当前栈帧的下一轮执行指令。系统会自动将当前指令及其结果存入执行历史，用于后续决策参考。**你必须说明为什么要设置这个新指令，以及它与上一步有何不同。**",
+      "description": "更新当前栈帧的下一轮执行指令。系统会自动将当前指令及其结果存入执行历史，用于后续决策参考。",
       "parameters": {
-        "instruction": "string (required, 下一轮要执行的具体动作或计划，必须明确且可执行)",
-        "reason": "string (required, 为什么要执行这个指令？它和上一步有什么不同？如果答不出'有什么不同'，说明可能陷入循环)",
-        "last_result": "string (required, 上一步指令的执行结果是什么？例如: 'locked'、'找到钥匙A'、'钥匙不匹配' 等)"
+        "instruction": "string (required, 下一轮要执行的具体动作或计划，必须明确且可执行)"
       },
       "return": {
         "success": {

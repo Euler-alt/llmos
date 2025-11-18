@@ -64,7 +64,6 @@ const LLMControlPanel = ({
       ]);
       // 更新输出（和你原来一致）
       setLlmOutput(apillmOutput);
-      alert("手动回复已发送到后端");
         // 清空输入框
         setManualResponse('');
         alert('手动回复已发送到后端');
