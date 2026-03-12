@@ -4,7 +4,8 @@
  */
 
 import React from 'react';
-import { getComponent, getComponentConfig } from './ComponentRegistry';
+import {WindowConfig} from "./types/WindowConfig";
+import { getWindow, getWindowsConfig } from './WindowsRegistry';
 
 /**
  * 动态窗口组件
@@ -13,10 +14,11 @@ import { getComponent, getComponentConfig } from './ComponentRegistry';
  * @param {Object} props.data - 窗口数据
  * @param {boolean} props.darkMode - 暗黑模式
  */
-const DynamicWindow = ({ config, data, darkMode }) => {
-  const Component = getComponent(config.windowType);
+const DynamicWindow = ({config, data, darkMode}: { config: WindowConfig; data: any; darkMode: boolean;
+}) => {
+  const Window = getWindow(config.windowType);
   
-  if (!Component) {
+  if (!Window) {
     return (
       <div className={`
         rounded-xl p-4 border-2 border-dashed
@@ -39,12 +41,12 @@ const DynamicWindow = ({ config, data, darkMode }) => {
   }
   
   // 合并配置和数据
-  const componentConfig = getComponentConfig(config.windowType, config);
+  const windowsConfig = getWindowsConfig(config.windowType, config);
   return (
-    <Component 
+    <Window
       data={data}
       darkMode={darkMode}
-      windowConfig = {componentConfig}
+      windowConfig = {windowsConfig}
     />
   );
 };
@@ -52,13 +54,18 @@ const DynamicWindow = ({ config, data, darkMode }) => {
 /**
  * 动态窗口工厂
  * @param {Object} props
- * @param {Array} props.windowConfigs - 窗口配置数组
- * @param {Object} props.windowsData - 窗口数据对象
+ * @param {Object} props.windows - 窗口数据对象
  * @param {Function} props. onEventCall - 前端用户事件回调
  * @param {boolean} props.darkMode - 暗黑模式
  */
-const DynamicWindowFactory = ({ windowConfigs = [], windowsData = {}, darkMode }) => {
-  if (!Array.isArray(windowConfigs) || windowConfigs.length === 0) {
+const DynamicWindowFactory = ({
+  windows = {},
+  darkMode
+}: {
+  windows?: Record<string, any>; // 明确告诉 TS：windows 是一个对象，且可选
+  darkMode: boolean;
+}) => {
+  if (!Array.isArray(windows) || windows.length === 0) {
     return (
       <div className={`
         rounded-lg p-6 text-center
@@ -75,14 +82,32 @@ const DynamicWindowFactory = ({ windowConfigs = [], windowsData = {}, darkMode }
 
   return (
     <div className="space-y-6">
-      {windowConfigs.map((windowConfig, index) => (
-        <DynamicWindow
-          key={windowConfig.windowId || `${windowConfig.windowType}-${index}`}
-          config={windowConfig}
-          data={windowsData[windowConfig.windowTitle] || {}}
-          darkMode={darkMode}
-        />
-      ))}
+      {windows.map((win, index) => {
+        // 关键点：为每个窗口包裹一个独立的逻辑保护
+        try {
+          // 如果核心配置缺失，跳过当前这个，不影响后续遍历
+          if (!win || !win.windowType) {
+            console.warn(`窗口配置[${index}]无效，已跳过`);
+            return null;
+          }
+
+          return (
+            <DynamicWindow
+              key={win.windowId || `win-${index}`}
+              config={win}
+              data={win.data || {}} // 数据直接从对象中取
+              darkMode={darkMode}
+            />
+          );
+        } catch (err) {
+        const message = err instanceof Error ? err.message : '未知错误'
+        return (
+          <div key={index} className="p-4 border border-red-500 rounded-lg bg-red-50">
+            <p className="text-red-600 text-sm">窗口 [{win.windowTitle}] 渲染崩溃: {message}</p>
+          </div>
+        )
+      }
+      })}
     </div>
   );
 };

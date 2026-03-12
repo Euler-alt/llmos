@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {event_call} from "../../api/api";
+import {event_call} from "../../../../../api/api";
+import {WindowProps} from "../types/WindowConfig";
 
 const chatWindow_func = 'user_response' //魔法字符串，和后端chat_window对应
-const ChatWindow = ({ data, windowConfig,darkMode }) => {
+const ChatWindow = ({ data, windowConfig,darkMode }:WindowProps) => {
   const [isUpdated, setIsUpdated] = useState(false);
   // activeTab 现在只用于 Meta/State 的切换
   const [activeTab, setActiveTab] = useState('state');

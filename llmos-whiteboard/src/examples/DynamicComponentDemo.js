@@ -4,8 +4,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import DynamicWindowFactory from '../components/PromptWindows/DynamicWindowFactory';
-import { registerComponent, getAvailableComponentTypes } from '../components/PromptWindows/ComponentRegistry';
+import DynamicWindowFactory from '../components/main_pages/prompt_mainboard/PromptWindows/DynamicWindowFactory';
+import { registerWindows, getAvailableWindowsTypes } from '../components/main_pages/prompt_mainboard/PromptWindows/WindowsRegistry';
 import { mockBackendSSEData, backendIntegrationHelpers } from '../protocols/BackendIntegrationExample';
 
 // 模拟自定义组件
@@ -120,7 +120,7 @@ const CustomAnalyticsWindow = ({ data, onUpdate, darkMode }) => {
 };
 
 // 注册自定义组件
-registerComponent('custom-analytics', CustomAnalyticsWindow, {
+registerWindows('custom-analytics', CustomAnalyticsWindow, {
   title: '数据分析面板',
   color: 'purple',
   tabs: ['dashboard', 'metrics', 'reports']
@@ -134,7 +134,7 @@ const DynamicComponentDemo = () => {
 
   useEffect(() => {
     // 获取可用的组件类型
-    setAvailableComponents(getAvailableComponentTypes());
+    setAvailableComponents(getAvailableWindowsTypes());
     
     // 模拟后端配置加载
     const loadDemoConfig = () => {

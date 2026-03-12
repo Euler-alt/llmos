@@ -26,12 +26,12 @@ program = ALFworldProgram()
 # 新式后端状态管理
 class WindowConfig(BaseModel):
     """窗口配置模型"""
-    id: str
-    type: str  # 必须与前端组件注册表匹配：kernel, heap, stack, code
-    title: str
+    windowId: str
+    windowType: str  # 必须与前端组件注册表匹配：kernel, heap, stack, code
+    windowTitle: str
     description: Optional[str] = None
     order: int = 0
-    color: Optional[str] = None
+    windowTheme: Optional[str] = None
     icon: Optional[str] = None
 
 class BackendState:
@@ -39,49 +39,77 @@ class BackendState:
     def __init__(self):
         self.window_configs: List[WindowConfig] = [
             WindowConfig(
-                id="kernel-1",
-                type="Kernel",
-                title="内核窗口",
+                windowId="kernel-1",
+                windowType="kernel",
+                windowTitle="Kernel",
                 description="系统规则和工作流程",
                 order=0,
-                color="blue",
+                windowTheme="blue",
                 icon="kernel"
             ),
             WindowConfig(
-                id="heap-2", 
-                type="Heap",
-                title="堆窗口",
+                windowId="heap-2",
+                windowType="heap",
+                windowTitle="Heap",
                 description="持久化存储区域",
                 order=1,
-                color="green",
+                windowTheme="green",
                 icon="heap"
             ),
             WindowConfig(
-                id="stack-3",
-                type="Stack",
-                title="栈模块",
+                windowId="stack-3",
+                windowType="stack",
+                windowTitle="Stack",
                 description="临时工作区域",
                 order=2,
-                color="yellow",
+                windowTheme="yellow",
                 icon="stack"
             ),
             WindowConfig(
-                id="text-4",
-                type="ALFWorld",
-                title="ALFWorld窗口",
+                windowId="text-4",
+                windowType="text",
+                windowTitle="ALFWorld",
                 description="alfworld信息",
                 order=4,
-                color="red",
+                windowTheme="red",
                 icon="code"
             )
         ]
         
         # 模块数据存储
         self.module_data: Dict[str, Any] = {
-            "Kernel": "系统规则和工作流：\n- 始终优先调用工具函数来完成任务。\n- 使用栈模块管理多步任务。",
-            "Heap": "持久化存储：\n- 当前用户：Alex\n- 任务目标：查找最新的AI新闻",
-            "Stack": "任务执行栈：\n- [step 1] 调用搜索工具\n- [step 2] 汇总搜索结果",
-            "ALFWorld": "文本"
+            "Kernel": {
+                "meta": "系统核心规则与工作流配置",
+                "state": {
+                    "rules": ["始终优先调用工具函数", "使用栈模块管理多步任务"],
+                    "status": "running"
+                }
+            },
+            "Heap": {
+                "meta": "持久化存储与上下文信息",
+                "state": {
+                    "current_user": "Alex",
+                    "objective": "查找最新的AI新闻",
+                    "last_sync": "2026-03-11 22:38"
+                }
+            },
+            "Stack": {
+                "meta": "任务执行栈控制",
+                "state": {
+                    "steps": [
+                        {"id": 1, "task": "调用搜索工具", "status": "done"},
+                        {"id": 2, "task": "汇总搜索结果", "status": "pending"}
+                    ],
+                    "depth": 2
+                }
+            },
+            "ALFWorld": {
+                "meta": "环境观察与交互文本",
+                "state": {
+                    "observation": "你正站在客厅中心，面前有一个茶几。",
+                    "inventory": []
+                }
+            }
         }
         
         # SSE 客户端队列
@@ -91,12 +119,21 @@ class BackendState:
         """验证窗口类型是否有效（与前端注册表匹配）"""
         valid_types = {"kernel", "heap", "stack", "code","text"}
         return window_type in valid_types
-    
+
     def get_full_state(self) -> Dict[str, Any]:
-        """获取完整的状态数据（新式格式）"""
+        """将数据直接嵌入到配置中，形成自包含的列表"""
+        integrated_windows = []
+        for config in self.window_configs:
+            # 获取该窗口对应的业务数据
+            data = self.module_data.get(config.windowTitle, {})
+
+            # 这里的 dict() 转换后，直接把 data 塞进去
+            window_item = config.dict()
+            window_item["data"] = data  # 关键：数据跟配置走
+            integrated_windows.append(window_item)
+
         return {
-            "windows": [config.dict() for config in self.window_configs],
-            **self.module_data
+            "windows": integrated_windows
         }
     
     def get_legacy_state(self) -> Dict[str, Any]:
@@ -160,12 +197,12 @@ async def update_window_configs(request: Request):
             
             # 创建窗口配置对象
             config = WindowConfig(
-                id=config_data.get("id", f"{config_data.get('type')}-{len(validated_configs)}"),
-                type=config_data.get("type"),
-                title=config_data.get("title", config_data.get('type')),
+                windowId=config_data.get("id", f"{config_data.get('type')}-{len(validated_configs)}"),
+                windowType=config_data.get("type"),
+                windowTitle=config_data.get("title", config_data.get('type')),
                 description=config_data.get("description"),
                 order=config_data.get("order", len(validated_configs)),
-                color=config_data.get("color"),
+                windowTheme=config_data.get("color"),
                 icon=config_data.get("icon")
             )
             validated_configs.append(config)

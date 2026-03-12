@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from typing import Dict, List, Any, Optional
 import asyncio
 import json
-from llmos_core.Program.chatProgram import ChatProgram
+from llmos_core.Program.chatprogram.chatProgram import ChatProgram
 app = FastAPI()
 
 # 允许跨域
@@ -45,6 +45,15 @@ class BackendState:
                 description="系统规则和工作流程",
                 order=0,
                 windowTheme="blue",
+                icon="kernel"
+            ),
+            WindowConfig(
+                WindowId="Code",
+                windowType="text",
+                windowTitle="Code",
+                description="系统规则和工作流程补充",
+                order=0,
+                windowTheme="yellow",
                 icon="kernel"
             ),
             WindowConfig(
@@ -97,6 +106,7 @@ class BackendState:
         # 模块数据存储
         self.window_data: Dict[str, Any] = {
             "Kernel": "系统规则和工作流：\n- 始终优先调用工具函数来完成任务。\n- 使用栈模块管理多步任务。",
+            "Code":"",
             "Heap": "持久化存储：\n- 当前用户：Alex\n- 任务目标：查找最新的AI新闻",
             "FlowStackWindow": "任务执行栈：\n- [step 1] 调用搜索工具\n- [step 2] 汇总搜索结果",
             "ALFWorld": "文本",
@@ -275,7 +285,7 @@ async def call_llm(data: LLMPrompt):
     print(prompt[:50])
 
     # 调用上下文程序
-    result = program.run(use_cache=False)
+    result = program.run()
 
     # 更新模块数据
     for key in backend_state.window_data:

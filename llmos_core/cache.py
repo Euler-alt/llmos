@@ -68,7 +68,6 @@ class CacheManager:
         try:
             raw = next(self._iter)
         except StopIteration:
-            self.reset()
             return None
 
         self._index += 1

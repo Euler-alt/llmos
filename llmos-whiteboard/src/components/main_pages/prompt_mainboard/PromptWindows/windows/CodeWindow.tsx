@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React, { useState} from 'react';
+import {WindowProps} from "../types/WindowConfig";
 
 // --- 1. 复合组件子结构定义（Sub-Components / Slots） ---
 // 1.1. 头部组件 (CodeWindow.Header)
@@ -73,7 +74,7 @@ const CodeWindowContent = ({ children, isMaximized, activeTab }) => (
 
 // --- 2. 主组件 (CodeWindow) - 组合子组件，提供逻辑 ---
 
-const CodeWindow = ({ data, onUpdate, windowConfig, darkMode, isUpdated }) => {
+const CodeWindow = ({ data, onUpdate, windowConfig, darkMode, isUpdated }:WindowProps) => {
   const [isMaximized, setIsMaximized] = useState(false);
   const [language, setLanguage] = useState('python');
   const [activeTab, setActiveTab] = useState('meta');

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {BaseWindow} from "./BaseWindow";
-import {SUPPORTED_THEMES} from "./Theme";
-const HeapWindow = ({ data, onUpdate, darkMode }) => {
+import {WindowProps} from "../types/WindowConfig";
+const HeapWindow = ({ data, onUpdate, darkMode }:WindowProps) => {
   const [isUpdated, setIsUpdated] = useState(false);
   const [activeTab, setActiveTab] = useState('state');
   const [isMaximized, setIsMaximized] = useState(false);

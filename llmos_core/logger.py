@@ -24,26 +24,30 @@ class LogEvent:
     _templates = {}
     _formatter = SafeFormatter()  # 使用安全格式化器
     @classmethod
-    def register(cls, name: str, template: str):
+    def register(cls, name: RecordType, template: str):
         cls._templates[name] = template
 
-    def __init__(self, event_type: str, **data):
+    def __init__(self, event_type: RecordType, **data):
         self.timestamp = datetime.datetime.now().strftime("%H:%M:%S")
         self.event_type = event_type
-        self.data = data
+        self.data = data or {}
+
+    def append_data(self, data: dict):
+        self.data.update(data)
+
 
     def render(self) -> str:
         template = self._templates.get(self.event_type)
         if template:
             # 使用 SafeFormatter 进行格式化
             formatted_message = self._formatter.format(template, **self.data)
-            return f"[{self.timestamp}] [{self.event_type}] {formatted_message}"
+            return f"[{self.timestamp}] [{self.event_type.value}] {formatted_message}"
         else:
-            return f"[{self.timestamp}] [{self.event_type}] {self.event_type}: {self.data}"
+            return f"[{self.timestamp}] [{self.event_type.value}] {self.event_type}: {self.data}"
 
-LogEvent.register(f"{RecordType.prompt_call}", "调用 {func_name},reasoning:{reasoning} → {result}")
-LogEvent.register(f"{RecordType.error}", "raw_response:{raw_response} →❌ {error}")
-LogEvent.register(f"{RecordType.tool_call}", "调用 {func_name},reasoning:{reasoning} → {result}")
-LogEvent.register(f"{RecordType.event_call}", "外部环境产生了调用 {func_name}")
+LogEvent.register(RecordType.prompt_call, "调用 {func_name},reasoning:{reasoning} → {result}")
+LogEvent.register(RecordType.error, "raw_response:{raw_response} →❌ {error}")
+LogEvent.register(RecordType.tool_call, "调用 {func_name},reasoning:{reasoning} → {result}")
+LogEvent.register(RecordType.event_call, "外部环境产生了调用 {func_name}")
 
 

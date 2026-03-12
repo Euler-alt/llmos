@@ -1,12 +1,13 @@
 import React, {useEffect, useRef, useState} from "react";
-import {useThemeClasses} from "./Theme";
-import {ByteCount, TextBox, WindowContent, WindowHeader, WindowTabs} from "./structure";
+import {useThemeClasses} from "../Theme";
+import {ByteCount, TextBox, WindowContent, WindowHeader, WindowTabs} from "../windowComponent";
 
-import {event_call} from "../../api/api";
+import {event_call} from "../../../../../api/api";
+import {WindowProps} from "../types/WindowConfig";
 /**
- * BaseWindow 组件，通过 theme 属性接收预制的主题名称。
+ * BaseWindow.tsx 组件，通过 theme 属性接收预制的主题名称。
  */
-export const BaseWindow = ({ data, darkMode, windowConfig}) => {
+export const BaseWindow = ({ data, darkMode, windowConfig}:WindowProps) => {
   const [isMaximized, setIsMaximized] = useState(false);
   const [activeTab, setActiveTab] = useState('state');
   const [isUpdated, setIsUpdated] = useState(false);
@@ -131,64 +132,3 @@ export const BaseWindow = ({ data, darkMode, windowConfig}) => {
     </div>
   );
 };
-
-
-// ---  App 演示主题切换 (根组件) ---
-
-const App = () => {
-    // 模拟数据和更新函数
-    const mockData = {
-        meta: "// 元数据信息",
-        state: "console.log('应用状态代码');",
-    };
-    const handleUpdate = (type, newData) => {
-        // 实际应用中，这里会调用 Firestore 或其他状态管理更新数据
-        console.log(`Updating ${type} with new data:`, newData);
-    };
-
-    const [currentTheme, setCurrentTheme] = useState('red');
-    const [isDark, setIsDark] = useState(true);
-
-    const themeOptions = ['red', 'blue', 'green'];
-
-    return (
-        <div className={`min-h-screen p-8 transition-colors ${isDark ? 'bg-gray-900' : 'bg-gray-100'}`}>
-            <h1 className="text-3xl font-bold text-center mb-6" style={{ color: isDark ? 'white' : 'black' }}>
-                预制主题切换示例 (Theme: {currentTheme})
-            </h1>
-
-            <div className="flex justify-center items-center space-x-4 mb-10">
-                {/* 主题选择下拉框 */}
-                <select
-                    value={currentTheme}
-                    onChange={(e) => setCurrentTheme(e.target.value)}
-                    className="p-2 border rounded-lg shadow-md bg-white text-gray-800"
-                >
-                    {themeOptions.map(t => (
-                        <option key={t} value={t}>{t} 主题</option>
-                    ))}
-                </select>
-                {/* 模式切换按钮 */}
-                <button
-                    onClick={() => setIsDark(!isDark)}
-                    className={`p-2 rounded-lg font-medium text-white shadow-md transition-colors ${isDark ? 'bg-indigo-700 hover:bg-indigo-600' : 'bg-gray-500 hover:bg-gray-600'}`}
-                >
-                    切换到 {isDark ? '浅色' : '深色'} 模式
-                </button>
-            </div>
-
-            <div className="flex justify-center">
-                {/* 渲染 BaseWindow，只需要传入主题名即可改变所有颜色 */}
-                <BaseWindow
-                    data={mockData}
-                    onUpdate={handleUpdate}
-                    darkMode={isDark}
-                    isUpdated={true}
-                    theme={currentTheme}
-                />
-            </div>
-        </div>
-    );
-}
-
-export default App;

@@ -1,7 +1,8 @@
 import React from 'react';
 import {BaseWindow} from "./BaseWindow";
+import {WindowProps} from "../types/WindowConfig";
 
-const StackWindow = ({ data, onUpdate, darkMode,windowConfig }) => {
+const StackWindow = ({ data, onUpdate, darkMode,windowConfig }:WindowProps) => {
   return (
     <BaseWindow
       data={data}

@@ -1,7 +1,34 @@
+// 定义模式：只有 light 和 dark
+type ThemeMode = 'light' | 'dark';
+
+export type WindowIcon = 'kernel' | 'heap' | 'stack' | 'code' | 'text' | 'unknown' | 'custom';
+
+// 定义一个主题支持的所有属性字段
+interface ThemeDefinition {
+    header: Record<ThemeMode, string>;
+    bgAccent: Record<ThemeMode, string>;
+    accent: Record<ThemeMode, string>;
+    focus: Record<ThemeMode, string>;
+    ring: Record<ThemeMode, string>;
+    border: Record<ThemeMode, string>;
+}
+
+// 定义最终返回给组件的类名对象结构
+export interface ThemeClasses {
+    containerBgTextClass: string;
+    headerClass: string;
+    accentClass: string;
+    focusRingClass: string;
+    updateRingClass: string;
+    containerBorderClass: string;
+}
+
 // --- 1. 主题颜色映射表 (THEME_MAP) ---
 // 这是核心的主题配置，将主题名称（如 'red'）映射到所需的 Tailwind CSS 类名。
 // 每个属性都包含 'light'（浅色模式）和 'dark'（深色模式）两种配置。
-export const THEME_MAP = {
+
+export type WindowTheme = keyof typeof THEME_MAP;
+export const THEME_MAP: Record<string, ThemeDefinition> = {
     // --- 原有主题 ---
 
     // 红色主题 (Red Theme) - 适合代码/警告窗口
@@ -80,9 +107,9 @@ export const THEME_MAP = {
         border: {light: 'border-gray-200', dark: 'border-gray-700'},
     },
 };
-export const SUPPORTED_THEMES = Object.keys(THEME_MAP); // --- 2. 主题 Hook (useThemeClasses) ---
+
 // 这个自定义 Hook 负责根据传入的主题名称和深色模式状态，返回一个包含所有所需 CSS 类名的对象。
-export const useThemeClasses = (themeName, darkMode) => {
+export const useThemeClasses = (themeName: string, darkMode: boolean):ThemeClasses => {
     // 尝试获取指定主题，如果主题不存在，则默认使用 'red' 主题
     const theme = THEME_MAP[themeName] || THEME_MAP['red'];
     // 确定当前是 'dark' 还是 'light' 模式

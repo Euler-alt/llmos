@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from './components/Navbar';
-import EditorTab from './components/EditorTab';
-import VisualizerTab from './components/VisualizerTab';
-import MonitorTab from './components/MonitorTab';
+import Navbar from './components/main_pages/Navbar';
+import EditorTab from './components/main_pages/prompt_mainboard/EditorTab';
+import VisualizerTab from './components/main_pages/Visualize_boards/VisualizerTab';
+import MonitorTab from './components/main_pages/monitor/MonitorTab';
 
 const App = () => {
   const [darkMode, setDarkMode] = useState(false);

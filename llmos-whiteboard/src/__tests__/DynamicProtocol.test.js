@@ -3,7 +3,7 @@
  * 单元测试和集成测试
  */
 
-import { validateBackendConfig, getAvailableComponentTypes, registerComponent } from '../components/PromptWindows/ComponentRegistry';
+import { validateBackendConfig, getAvailableWindowsTypes, registerWindows } from '../components/main_pages/prompt_mainboard/PromptWindows/WindowsRegistry';
 import { validateProtocolImplementation } from '../utils/ProtocolValidator';
 
 // 模拟测试组件
@@ -12,7 +12,7 @@ const TestComponent = () => <div>测试组件</div>;
 describe('动态组件协议', () => {
   describe('组件注册表', () => {
     test('应该包含基础组件类型', () => {
-      const types = getAvailableComponentTypes();
+      const types = getAvailableWindowsTypes();
       expect(types).toContain('kernel');
       expect(types).toContain('heap');
       expect(types).toContain('stack');
@@ -20,12 +20,12 @@ describe('动态组件协议', () => {
     });
 
     test('应该支持动态注册新组件', () => {
-      registerComponent('test-component', TestComponent, {
+      registerWindows('test-component', TestComponent, {
         title: '测试组件',
         color: 'test'
       });
       
-      const types = getAvailableComponentTypes();
+      const types = getAvailableWindowsTypes();
       expect(types).toContain('test-component');
     });
   });
@@ -150,7 +150,7 @@ describe('集成测试', () => {
     expect(isValid).toBe(true);
     
     // 验证组件类型
-    const availableTypes = getAvailableComponentTypes();
+    const availableTypes = getAvailableWindowsTypes();
     backendConfig.windowConfigs.forEach(config => {
       expect(availableTypes).toContain(config.type);
     });

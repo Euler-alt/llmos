@@ -4,10 +4,11 @@ from typing import List
 
 from llmos_core.Prompts.Windows import BasePromptWindow,FlowStackPromptWindow
 from llmos_core.Prompts.Windows.BaseWindow import NullSystemWindow
-
+from typing import List, Union
 import json
 import re
 
+from llmos_core.logger import LogEvent,RecordType
 ALLOWEDKEYS = ["call_type", "func_name", "kwargs", 'reasoning']
 NEEDKEYS = ["call_type", "func_name"]
 
@@ -132,68 +133,112 @@ class PromptMainBoard:
     def __init__(self):
 
         self.windows:List[BasePromptWindow] = []
-        self.system_window:BasePromptWindow | None = None
+        self.system_window:List[BasePromptWindow] = []
         self.handlers = {}
 
     def assemble_prompt(self):
         user_prompts = "".join([window.forward() for window in self.windows])
-        systemMessage = self.system_window.forward()
+        systemMessage = "".join([window.forward() for window in self.system_window])
 
         return {
             "system": systemMessage,
             "user": user_prompts  # ← 不加分隔符自然拼接
         }
 
-    def register_windows(self, windows: List[BasePromptWindow] | BasePromptWindow=NullSystemWindow(),system_window:BasePromptWindow=NullSystemWindow()):
-        """注册模块"""
-        """
-                注册模块。可以接受单个模块实例，也可以接受模块实例列表。
-                """
-        if windows:
-            # 1. 检查是否为可迭代对象（列表、元组等）
-            if isinstance(windows, Iterable):
-                windows_to_register = windows
-            else:
-                # 2. 否则，视为单个模块实例
-                windows_to_register = [windows]
+    def register_windows(
+            self,
+            windows: Union[List[BasePromptWindow], BasePromptWindow, None] = None,
+            system_windows: Union[List[BasePromptWindow], BasePromptWindow, None] = None
+    ):
+        """注册模块，可接受单个实例或实例列表"""
 
-            # 遍历所有需要注册的模块
-            for window in windows_to_register:
-                # 简化类型检查：可以添加更严格的检查，确保是 BasePromptWindow 的子类
-                # if not isinstance(module, BasePromptWindow):
-                #     raise TypeError("Registered item must be a Prompt Window module.")
+        def _register(target_list, win):
+            target_list.append(win)
+            self.handlers.update(win.export_handlers() or {})
 
-                self.windows.append(window)
+        def _ensure_list(obj):
+            if obj is None:
+                return []
+            if isinstance(obj, Iterable) and not isinstance(obj, (str, bytes)):
+                return list(obj)
+            return [obj]
 
-                # 尝试更新 handlers
-                # 假设每个 module 都有 export_handlers 方法
-                self.handlers.update(window.export_handlers() or {})
+        for window in _ensure_list(windows):
+            _register(self.windows, window)
 
-            if system_window:
-                self.register_system_window(system_window)
-
-    def register_system_window(self, system_window):
-        self.system_window = system_window
-        self.handlers.update(system_window.export_handlers() or {})
+        for sys_win in _ensure_list(system_windows):
+            _register(self.system_window, sys_win)
 
     def handle_call(self, call, auto_record=True):
         """统一分发到对应窗口的 handler"""
         func_name = call["func_name"]
-        call_type = call["call_type"]
+
+        # call["call_type"] 是字符串，例如 "tool" 或 "prompt"
+        call_type_str = call["call_type"]
+
         kwargs = call["kwargs"]
         reasoning = call.get("reasoning", '')
+
+        # 🚀 关键步骤：将字符串转换为 RecordType 实例
+        try:
+            # 使用枚举的构造函数，根据值查找对应的成员
+            # 例如 RecordType("tool") 会返回 RecordType.tool_call
+            event_type = RecordType(call_type_str)
+        except ValueError:
+            # 如果字符串不在 RecordType 的值中，则使用错误类型或默认类型
+            event_type = RecordType.error  # 或者 RecordType.event_call，取决于您的定义
+            # 记录一个额外的错误信息，表示调用类型不匹配
+
         if func_name in self.handlers:
             try:
                 result = self.handlers[func_name](**kwargs)
+
                 if auto_record:
-                    # todo，这里会引发bug
-                    self.record_execution(call_type, func_name=func_name, result=result, reasoning=reasoning, **kwargs)
+                    record_data = {
+                        "func_name": func_name,
+                        "reasoning": reasoning,
+                        "result": result,
+                        "call_kwargs": kwargs,
+                        "status": "success",
+                    }
+                    # 传入的是 RecordType 实例
+                    event_log = LogEvent(event_type, **record_data)
+                    # 提交 log_event 对象（假设有 _submit_event 方法）
+                    self._submit_event(event_log)
+
                 return result
+
             except Exception as e:
                 if auto_record:
-                    self.record_execution('error', func_name=func_name, reasoning=reasoning,exception_message=str(e),**kwargs)
-                return {"status": "error", "reason": f"handler not found: {str(e)}"}
+                    # 发生异常时，强制使用 RecordType.error 实例
+                    error_data = {
+                        "func_name": func_name,
+                        "reasoning": reasoning,
+                        "error": str(e),  # 对应 LogEvent.register 中 error 模板的键
+                        "raw_response": f"Execution failed for {func_name}",
+                        "call_kwargs": kwargs,
+                        "status": "error",
+                    }
+                    # 传入 RecordType.error 实例
+                    event_log = LogEvent(RecordType.error, **error_data)
+                    self._submit_event(event_log)
+
+                return {"status": "error", "reason": f"execution failed: {str(e)}"}
         else:
+            # handler not found 时的错误处理...
+            if auto_record:
+                # 可以使用 RecordType.error 或 RecordType.event_call 来记录
+                not_found_data = {
+                    "func_name": func_name,
+                    "reasoning": reasoning,
+                    "error": f"Handler not found: {func_name}",
+                    "raw_response": f"Call type: {call_type_str}",
+                    "call_kwargs": kwargs,
+                    "status": "error_not_found",
+                }
+                event_log = LogEvent(RecordType.error, **not_found_data)
+                self._submit_event(event_log)
+
             return {"status": "error", "reason": f"handler not found: {func_name}"}
 
     def apply_response(self, response:str,auto_record=True):
@@ -205,26 +250,31 @@ class PromptMainBoard:
                 self.handle_call(call,auto_record)
         except Exception as e:
             if auto_record:
-                self.record_execution("error", raw_response=response, error_message =  str(e))
+                record_data = {
+                    "response": response,
+                    "error": str(e),
+                }
+                log_event = LogEvent(RecordType.error, **record_data)
+                self._submit_event(log_event)
         return calls
 
-    def record_execution(self, event_type,**kwargs):
+    def _submit_event(self, log_event:LogEvent):
         """
         记录一次正常调用
-        :param event_type:
-        :param kwargs:
+        :type log_event: LogEvent
         :return:
         """
         for window in self.windows:
             if isinstance(window, FlowStackPromptWindow):
-                window.record_event(event_type=event_type, **kwargs)
+                window.record_event(log_event)
                 break
 
     def get_divided_snapshot(self):
         divided_snap_shot = {}
-        divided_snap_shot.update(self.system_window.get_divided_snapshot())
         for window in self.windows:
             divided_snap_shot.update(window.get_divided_snapshot())
+        for sys_win in self.system_window:
+            divided_snap_shot.update(sys_win.get_divided_snapshot())
         return divided_snap_shot
 
 

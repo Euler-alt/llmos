@@ -1,8 +1,8 @@
 import React, {useCallback, useState} from 'react';
-import {API_BASE_URL} from "../config/api";
+import {API_BASE_URL} from "../../../../config/api";
 import LLMOutputWindow from "./LLMOutputWindow";
 import HistoryWindow from "./HistoryWindow";
-import {callLLM} from "../api/api";
+import {callLLM} from "../../../../api/api";
 
 const LLMControlPanel = ({
   darkMode,

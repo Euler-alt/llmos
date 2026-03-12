@@ -6,7 +6,7 @@ import React, {useEffect, useRef, useState} from "react";
 // 通用头部组件 (WindowHeader)
 // 负责窗口的标题栏、图标、动作区以及最大化按钮。
 // 它通过 headerClass 属性接收主题背景色。
-export const WindowHeader = ({title, icon, actions, isMaximized, setIsMaximized, headerClass}) => {
+export const WindowHeader = ({title, icon, actions, isMaximized, setIsMaximized, headerClass,darkMode}) => {
     // 默认代码图标 SVG
     const DefaultIcon = () => (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" style={{width: '20px', height: '20px'}}

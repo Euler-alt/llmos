@@ -1,6 +1,7 @@
 import React  from 'react';
 import {BaseWindow} from "./BaseWindow";
-const HeapWindow = ({ data, onUpdate, darkMode,windowConfig }) => {
+import {WindowProps} from "../types/WindowConfig";
+const HeapWindow = ({ data, onUpdate, darkMode,windowConfig }:WindowProps) => {
   return (
     <BaseWindow
       data={data}

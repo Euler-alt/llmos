@@ -1,6 +1,4 @@
 from pathlib import Path
-import json
-from platform import system
 
 from llmos_core.Program.BaseProgram import BaseProgram
 from llmos_core.cache import CacheManager
@@ -10,7 +8,7 @@ from llmos_core.Prompts.Windows import PromptWindow
 
 CACHE_DIR = Path(__file__).parent / 'cache_result'
 CACHE_FILE = CACHE_DIR / "chat.json"
-
+Code_file = Path(__file__).parent / "chatCode.md"
 class ChatProgram(BaseProgram):
     def __init__(self,use_cache=True):
 
@@ -23,13 +21,13 @@ class ChatProgram(BaseProgram):
             PromptWindow.from_name(PromptWindow.ThinkingPromptWindow),
         ]
 
-        system_window = PromptWindow.from_name(PromptWindow.KernelPromptWindow)
+        system_window = [PromptWindow.from_name(PromptWindow.KernelPromptWindow),PromptWindow.from_name(PromptWindow.CodePromptWindow,file_path=Code_file),]
         # === 初始化系统结构 ===
-        super().__init__(windows=windows,system_window=system_window)
+        super().__init__(windows=windows,system_windows=system_window)
         self.llm_client = LLMClient()
         self.use_cache = use_cache
         # === 缓存生成器状态 ===
-        self.cache_manager = CacheManager(CACHE_FILE,clear_cache_file=use_cache)
+        self.cache_manager = CacheManager(CACHE_FILE,clear_cache_file=not use_cache)
 
     def set_client_model(self, model_name):
         self.llm_client.set_model(model_name)
