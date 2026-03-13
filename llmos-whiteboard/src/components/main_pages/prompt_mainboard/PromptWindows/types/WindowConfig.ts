@@ -17,6 +17,7 @@ export interface WindowProps<T = {}> {
   darkMode: boolean
   windowConfig: WindowConfig
   onUpdate?: any
+  isUpdated?: boolean
   extra?: T  // 扩展字段
 }
 

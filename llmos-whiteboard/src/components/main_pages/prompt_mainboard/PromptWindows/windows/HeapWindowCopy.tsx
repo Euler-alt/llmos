@@ -24,7 +24,7 @@ const HeapWindow = ({ data, onUpdate, darkMode }:WindowProps) => {
     });
   }, [data]);
   
-  const getTabClass = (tab) => {
+  const getTabClass = (tab:string) => {
     const baseClass = "px-4 py-2 font-medium rounded-t-lg transition-colors duration-200";
     const activeClass = darkMode 
       ? "bg-gray-700 text-white border-b-2 border-green-500" 
@@ -125,7 +125,7 @@ const HeapWindow = ({ data, onUpdate, darkMode }:WindowProps) => {
               `}
               value={meta || ''}
               onChange={(e) => onUpdate('heap', { ...data, meta: e.target.value })}
-              rows="6"
+              rows={6}
               placeholder="输入堆窗口的meta信息..."
             />
           </div>
@@ -151,7 +151,7 @@ const HeapWindow = ({ data, onUpdate, darkMode }:WindowProps) => {
               `}
               value={state || ''}
               onChange={(e) => onUpdate('heap', { ...data, state: e.target.value })}
-              rows="8"
+              rows={8}
               placeholder="输入堆窗口的state信息..."
               spellCheck="false"
             />

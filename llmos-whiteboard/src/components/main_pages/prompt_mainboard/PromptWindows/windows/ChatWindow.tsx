@@ -181,7 +181,7 @@ const ChatWindow = ({ data, windowConfig,darkMode }:WindowProps) => {
                     `}
                     value={meta || ''}
                     onChange={(e) => event_call('text', { ...data, meta: e.target.value })}
-                    rows="4"
+                    rows={4}
                     placeholder="输入文本窗口的meta信息..."
                     spellCheck="false"
                   />
@@ -209,7 +209,7 @@ const ChatWindow = ({ data, windowConfig,darkMode }:WindowProps) => {
                     `}
                     value={state || ''}
                     onChange={(e) => event_call('text', { ...data, state: e.target.value })}
-                    rows="4"
+                    rows={4}
                     placeholder="输入文本窗口的state信息..."
                     spellCheck="false"
                   />
@@ -255,7 +255,7 @@ const ChatWindow = ({ data, windowConfig,darkMode }:WindowProps) => {
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              rows="1"
+              rows={1}
               className={`flex-1 p-3 rounded-xl border-2 resize-none text-base 
                 ${darkMode 
                   ? 'bg-gray-900 text-gray-200 border-gray-700 focus:border-blue-500' 

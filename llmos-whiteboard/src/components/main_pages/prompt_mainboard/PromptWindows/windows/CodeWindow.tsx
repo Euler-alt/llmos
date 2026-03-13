@@ -4,7 +4,16 @@ import {WindowProps} from "../types/WindowConfig";
 // --- 1. 复合组件子结构定义（Sub-Components / Slots） ---
 // 1.1. 头部组件 (CodeWindow.Header)
 // 负责标题、图标，并允许通过 'actions' prop 插入自定义元素（如语言选择和最大化按钮）
-export const WindowHeader = ({ title, icon, actions, darkMode, isMaximized, setIsMaximized }) => {
+interface WindowHeaderProps {
+  title: string;              // 必选
+  icon?: string;               // 可选：加个问号
+  darkMode:boolean;
+  actions?: React.ReactNode;   // 可选
+  isMaximized: boolean;        // 必选
+  setIsMaximized: (val: boolean) => void; // 必选：函数类型
+  headerClass?: string;        // 可选
+}
+export const WindowHeader = ({ title, icon, actions, darkMode, isMaximized, setIsMaximized }:WindowHeaderProps) => {
   const headerClass = darkMode ? 'bg-red-900' : 'bg-red-600';
 
   return (
@@ -43,7 +52,7 @@ export const WindowHeader = ({ title, icon, actions, darkMode, isMaximized, setI
 
 // 1.2. 标签页组件 (CodeWindow.Tabs)
 const CodeWindowTabs = ({ activeTab, setActiveTab, darkMode }) => {
-  const getTabClass = (tabName) => {
+  const getTabClass = (tabName:string) => {
     const base = "px-4 py-2 text-sm font-medium transition-colors duration-200";
     if (activeTab === tabName) {
       return `${base} ${darkMode ? 'text-white border-red-500' : 'text-red-600 border-red-500'} border-b-2`;

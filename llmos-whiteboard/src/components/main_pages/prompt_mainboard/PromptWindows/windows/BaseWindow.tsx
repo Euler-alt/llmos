@@ -1,7 +1,7 @@
 import React, {useEffect, useRef, useState} from "react";
 import {useThemeClasses} from "../Theme";
 import {ByteCount, TextBox, WindowContent, WindowHeader, WindowTabs} from "../windowComponent";
-
+import { CSSProperties } from 'react';
 import {event_call} from "../../../../../api/api";
 import {WindowProps} from "../types/WindowConfig";
 /**
@@ -62,7 +62,7 @@ export const BaseWindow = ({ data, darkMode, windowConfig}:WindowProps) => {
   `;
 
   // 最大化时的固定定位样式
-  const maximizedStyle = {
+  const maximizedStyle: CSSProperties = {
         position: 'fixed',
         top: '10%',
         left: '25%',
@@ -81,7 +81,6 @@ export const BaseWindow = ({ data, darkMode, windowConfig}:WindowProps) => {
       {/* 1. 组合：WindowHeader，传入 headerClass 来定制颜色 */}
       <WindowHeader
         title={windowConfig?.windowTitle || "窗口 (Window)"}
-        darkMode={darkMode}
         isMaximized={isMaximized}
         setIsMaximized={setIsMaximized}
         actions={byteCount}

@@ -6,7 +6,15 @@ import React, {useEffect, useRef, useState} from "react";
 // 通用头部组件 (WindowHeader)
 // 负责窗口的标题栏、图标、动作区以及最大化按钮。
 // 它通过 headerClass 属性接收主题背景色。
-export const WindowHeader = ({title, icon, actions, isMaximized, setIsMaximized, headerClass,darkMode}) => {
+interface WindowHeaderProps {
+  title: string;              // 必选
+  icon?: string;               // 可选：加个问号
+  actions?: React.ReactNode;   // 可选
+  isMaximized: boolean;        // 必选
+  setIsMaximized: (val: boolean) => void; // 必选：函数类型
+  headerClass: string;        // 可选
+}
+export const WindowHeader = ({title, icon, actions, isMaximized, setIsMaximized, headerClass}:WindowHeaderProps) => {
     // 默认代码图标 SVG
     const DefaultIcon = () => (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" style={{width: '20px', height: '20px'}}
@@ -55,7 +63,7 @@ export const WindowHeader = ({title, icon, actions, isMaximized, setIsMaximized,
 // 负责标签页的显示和切换逻辑。
 // 通过 accentClass 接收主题强调色，用于激活状态下的文本和边框。
 export const WindowTabs = ({activeTab, setActiveTab, darkMode, accentClass}) => {
-    const getTabClass = (tabName) => {
+    const getTabClass = (tabName:string) => {
         const base = "px-4 py-2 text-sm font-medium transition-colors duration-200";
         if (activeTab === tabName) {
             // 激活状态：使用传入的 accentClass 作为文本色，并将其转换为 border 颜色
@@ -77,6 +85,7 @@ export const WindowTabs = ({activeTab, setActiveTab, darkMode, accentClass}) => 
         </div>
     );
 };
+
 export const HeaderActions = () => {
     const [language, setLanguage] = useState('other')
     return (
@@ -112,6 +121,7 @@ export const TextBox = ({
                             darkMode,
                             placeholder,
                             maxHeight = 200,
+                            rows=6,
                             isMaximized = false,
                             focusRingClass = "",
                         }) => {
