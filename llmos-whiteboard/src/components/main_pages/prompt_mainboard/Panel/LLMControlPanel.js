@@ -9,11 +9,26 @@ const LLMControlPanel = ({
   fullPrompt
 }) => {
   const [selectedModel, setSelectedModel] = useState('default'); // 选择的模型
+  const [selectedProgram, setSelectedProgram] = useState('ALFworld'); // 选择的程序
   const [manualResponse, setManualResponse] = useState(''); // 手动输入的回复
     // 手动发送回复
   const [history, setHistory] = useState([]);
   const [llmOutput, setLlmOutput] = useState({});
   const [loading, setLoading] = useState(false);
+  const [useCache, setUseCache] = useState(true);
+
+  const handleCacheToggle = async (enabled) => {
+    setUseCache(enabled);
+    try {
+      await fetch(`${API_BASE_URL}/llm/config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ use_cache: enabled }),
+      });
+    } catch (error) {
+      console.error("Failed to update cache config:", error);
+    }
+  };
   
   const handleLLMCall = async () => {
     setLoading(true)
@@ -76,6 +91,25 @@ const LLMControlPanel = ({
     }
   };
 
+  const handleProgramSwitch = async (programName) => {
+    if (!programName) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/program/set`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ program_name: programName }),
+      });
+      if (res.ok) {
+        setSelectedProgram(programName);
+        console.log(`✅ 成功切换到程序: ${programName}`);
+      } else {
+        alert('切换程序失败');
+      }
+    } catch (err) {
+      console.error("❌ 切换程序错误:", err);
+    }
+  };
+
   // 切换模型
   // 1. 切换模型函数（稳定、不变，无闭包问题）
   const handleModelSwitch = useCallback(async (selectedModel) => {
@@ -130,8 +164,30 @@ const LLMControlPanel = ({
         </div>
 
         <div className="p-4 space-y-6">
-          {/* 模型选择和调用区域 */}
+          {/* 程序和模型选择区域 */}
           <div className="flex flex-col sm:flex-row gap-4 items-center">
+            <div className="flex-1 max-w-xs">
+              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                选择程序
+              </label>
+              <select
+                value={selectedProgram}
+                onChange={(e) => handleProgramSwitch(e.target.value)}
+                className={`
+                  w-full px-3 py-3 rounded-lg border font-medium
+                  ${darkMode 
+                    ? 'bg-gray-700 text-gray-200 border-gray-600' 
+                    : 'bg-white text-gray-800 border-gray-300'
+                  }
+                  focus:outline-none focus:ring-2 focus:ring-blue-500
+                `}
+              >
+                <option value="ALFworld">ALFworld (游戏环境)</option>
+                <option value="Context">Context (任务上下文)</option>
+                <option value="Chat">Chat (通用对话)</option>
+              </select>
+            </div>
+
             <div className="flex-1 max-w-xs">
               <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 选择模型
@@ -157,6 +213,18 @@ const LLMControlPanel = ({
                 <option value="claude-3-haiku">Claude 3 Haiku</option>
                 <option value="gemini-pro">Gemini Pro</option>
               </select>
+            </div>
+
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                checked={useCache}
+                onChange={(e) => handleCacheToggle(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <label htmlFor="useCache" className="ml-2 block text-sm text-gray-900">
+                Use Cache
+              </label>
             </div>
 
             <div className="flex-1 max-w-xs">

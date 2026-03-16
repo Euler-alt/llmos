@@ -1,7 +1,9 @@
-from llmos_core.Prompts import PromptMainBoard, parse_response
-from llmos_core.llmos_util import LLMClient
+from llmos_core.Prompts.PromptMainBoard import PromptMainBoard, parse_response
+from llmos_core.llmos_util.api_client import LLMClient
 from llmos_core.Prompts.Windows import PromptWindow
+from llmos_core.schema import ProgramRunResult, LLMOSCall
 import yaml
+import json
 from pathlib import Path
 
 CACHE_FILE = Path('./cache') / "cache.yaml"
@@ -25,32 +27,31 @@ class ContextProgram:
         self.promptMainBoard.register_windows(windows)
         self.llm_client = LLMClient()
 
-    def run(self, use_cache=True) -> dict:
+    def run(self, use_cache=True) -> ProgramRunResult:
         if use_cache:
-            response = load_cache_result()
+            response_text = load_cache_result()
+            calls = parse_response(response_text)
         else:
-            full_prompt = self.promptMainBoard.assemble_prompt()
-            response = self.llm_client.chat(full_prompt)
-        # 3. 解析结果并更新内存
-        try:
-            calls = parse_response(response)
-            for call in calls:
-                call_type = call["call_type"]
-                func_name = call["func_name"]
-                kwargs = call["kwargs"]
-                if call_type.lower() == "prompt":
-                    self.promptMainBoard.handle_call(func_name, **kwargs)
+            messages = self.promptMainBoard.assemble_messages()
+            tools = self.promptMainBoard.get_all_tools()
+            response_msg = self.llm_client.chat(messages, tools=tools)
+            response_text = response_msg.content or ""
+            
+            if hasattr(response_msg, 'tool_calls') and response_msg.tool_calls:
+                calls = []
+                for tc in response_msg.tool_calls:
+                    call_data = LLMOSCall(
+                        call_type="tool",
+                        func_name=tc.function.name,
+                        kwargs=json.loads(tc.function.arguments)
+                    )
+                    result = self.promptMainBoard.handle_call(call_data)
+                    calls.append(result)
+            else:
+                calls = self.promptMainBoard.apply_response(response_text)
 
-            return {
-                "snapshot": self.promptMainBoard.get_divide_snapshot(),
-                "raw_response": response,
-                "parsed_calls": calls
-            }
-
-        except Exception as e:
-            print("解析错误:", e, "原始输出:", response)
-            return {
-                "snapshot": {},
-                "raw_response": response,
-                "parsed_calls": []
-            }
+        return ProgramRunResult(
+            snapshot=self.promptMainBoard.get_divided_snapshot(),
+            raw_response=response_text,
+            parsed_calls=calls
+        )

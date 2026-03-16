@@ -4,11 +4,11 @@ import json
 
 Meta_dir = Path(__file__).parent
 Meta_file = Meta_dir / 'heap_description.json'
-@BasePromptWindow.register('heap','Heap')
+
 class HeapPromptWindow(BasePromptWindow):
 
-    def __init__(self, window_name="Heap"):
-        super().__init__(window_name=window_name)
+    def __init__(self, window_title="Heap"):
+        super().__init__(window_title=window_title)
         self.file_path = Meta_file
         with open(self.file_path,'r') as f:
             self.description = f.read()

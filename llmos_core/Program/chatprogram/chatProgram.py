@@ -48,16 +48,46 @@ class ChatProgram(BaseProgram):
                 }
 
         # === 实时运行 ===
-        prompt = self.promptMainBoard.assemble_prompt()
-        system_prompt = prompt.get("system")
-        user_prompt = prompt.get("user")
-        response = self.llm_client.chat(user_prompt=user_prompt,system_prompt=system_prompt)
-        calls = self.apply_response(response)
+        messages = self.promptMainBoard.assemble_messages()
+
+        # This logic is derived from the intended replacement, but adapted to be a complete and valid code block.
+        # It introduces tool calling and handles both tool calls and regular text responses.
+        import json
+        from llmos_core.llmos_util import LLMOSCall
+
+        # 调用 LLM，传入收集到的 tools (如果存在)
+        tools = self.promptMainBoard.get_all_tools()
+        kwargs = {"messages": messages}
+        if tools:
+            kwargs["tools"] = tools
+
+        response_msg = self.llm_client.chat(**kwargs)
+        response_text = response_msg.content or ""
+
+        # 优先处理 tool_calls
+        if hasattr(response_msg, 'tool_calls') and response_msg.tool_calls:
+            calls = []
+            for tc in response_msg.tool_calls:
+                call_data = LLMOSCall(
+                    call_type="tool",
+                    func_name=tc.function.name,
+                    kwargs=json.loads(tc.function.arguments)
+                )
+                result = self.promptMainBoard.handle_call(call_data, auto_record=auto_record)
+                calls.append(result)
+        else:
+            # 如果没有 tool_calls，则尝试解析 content 中的 JSON Syscall
+            calls = self.apply_response(response_text)
+
         # === 缓存记录 ===
-        self.cache_manager.append_record(prompt,response)
+        # NOTE: Caching `response_text` will not preserve tool calls on replay.
+        # The cache replay logic might need a separate update to handle structured `response_msg`.
+        serializable_messages = [m.model_dump() for m in messages]
+        self.cache_manager.append_record(serializable_messages, response_text)
+
         return {
             "snapshot": self.promptMainBoard.get_divided_snapshot(),
-            "raw_response": response,
+            "raw_response": response_text, # Use response_text instead of the old `response`
             "parsed_calls": calls
         }
 

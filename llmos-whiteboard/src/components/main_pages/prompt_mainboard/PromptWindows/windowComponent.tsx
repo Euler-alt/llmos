@@ -8,13 +8,15 @@ import React, {useEffect, useRef, useState} from "react";
 // 它通过 headerClass 属性接收主题背景色。
 interface WindowHeaderProps {
   title: string;              // 必选
-  icon?: string;               // 可选：加个问号
+  icon?: React.ReactNode;      // 允许传入字符串或 SVG 元素
   actions?: React.ReactNode;   // 可选
   isMaximized: boolean;        // 必选
   setIsMaximized: (val: boolean) => void; // 必选：函数类型
+  isCollapsed: boolean;        // 必选
+  setIsCollapsed: (val: boolean) => void; // 必选
   headerClass: string;        // 可选
 }
-export const WindowHeader = ({title, icon, actions, isMaximized, setIsMaximized, headerClass}:WindowHeaderProps) => {
+export const WindowHeader = ({title, icon, actions, isMaximized, setIsMaximized, isCollapsed, setIsCollapsed, headerClass}:WindowHeaderProps) => {
     // 默认代码图标 SVG
     const DefaultIcon = () => (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" style={{width: '20px', height: '20px'}}
@@ -37,6 +39,23 @@ export const WindowHeader = ({title, icon, actions, isMaximized, setIsMaximized,
             {/* 动作区 (actions slot) 和最大化按钮 */}
             <div className="flex items-center space-x-3">
                 {actions}
+
+                {/* 折叠/展开按钮 */}
+                <button
+                    className="p-2 rounded-full transition-all duration-200 hover:bg-white hover:bg-opacity-20"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setIsCollapsed(!isCollapsed);
+                    }}
+                    title={isCollapsed ? "展开窗口" : "折叠窗口"}
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" style={{width: '16px', height: '16px'}}
+                         viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd"
+                              d={isCollapsed ? "M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" : "M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"}
+                              clipRule="evenodd"/>
+                    </svg>
+                </button>
 
                 {/* 最大化/恢复按钮，调用 setIsMaximized 改变父组件状态 */}
                 <button

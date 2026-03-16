@@ -3,8 +3,7 @@ import yaml
 from pathlib import Path
 from typing import Optional, Any
 
-CACHE_FILE = Path('./cache_result') / "cache.yaml"
-
+CACHE_FILE = Path(__file__).parent /"cache_result"/ "cache.yaml"
 
 def load_cache_result(result_path: Optional[str | Path] = None) -> Any:
     # 1. 确定路径

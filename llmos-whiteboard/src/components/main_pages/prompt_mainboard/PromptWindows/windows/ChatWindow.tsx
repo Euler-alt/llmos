@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {event_call} from "../../../../../api/api";
 import {WindowProps} from "../types/WindowConfig";
+import {WindowHeader} from "../windowComponent";
 
 const chatWindow_func = 'user_response' //魔法字符串，和后端chat_window对应
 const ChatWindow = ({ data, windowConfig,darkMode }:WindowProps) => {
@@ -8,6 +9,7 @@ const ChatWindow = ({ data, windowConfig,darkMode }:WindowProps) => {
   // activeTab 现在只用于 Meta/State 的切换
   const [activeTab, setActiveTab] = useState('state');
   const [isMaximized, setIsMaximized] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const metaTextareaRef = useRef(null);
   const stateTextareaRef = useRef(null);
@@ -115,36 +117,24 @@ const ChatWindow = ({ data, windowConfig,darkMode }:WindowProps) => {
         borderRadius: '0.5rem'
       } : {}}
     >
-      {/* 头部 - 保持不变 */}
-      <div className={`
-        p-4 flex-shrink-0 flex justify-between items-center
-        ${darkMode ? 'bg-blue-900' : 'bg-blue-600'} text-white
-      `}>
-        <h3 className="text-lg font-medium flex items-center">
+      {/* 头部 - 统一使用 WindowHeader */}
+      <WindowHeader
+        title={windowConfig.windowTitle || "对话窗口"}
+        isMaximized={isMaximized}
+        setIsMaximized={setIsMaximized}
+        isCollapsed={isCollapsed}
+        setIsCollapsed={setIsCollapsed}
+        headerClass={darkMode ? 'bg-blue-900' : 'bg-blue-600'}
+        icon={
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" style={{ width: '20px', height: '20px' }} viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
           </svg>
-          {windowConfig.windowTitle}
-        </h3>
-
-        <div className="flex items-center space-x-3">
-          <button
-            className="p-2 rounded-full transition-all duration-200 hover:bg-white hover:bg-opacity-20"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsMaximized(!isMaximized);
-            }}
-            title={isMaximized ? "恢复窗口大小" : "最大化窗口"}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" style={{ width: '16px', height: '16px' }} viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d={isMaximized ? "M3 7a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 6a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" : "M3 4a1 1 0 011-1h12a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 1v10h10V5H5z"} clipRule="evenodd" />
-            </svg>
-          </button>
-        </div>
-      </div>
+        }
+      />
 
       {/* 核心内容区 */}
-      <div className="flex-grow flex flex-col min-h-0">
+      {!isCollapsed && (
+        <div className="flex-grow flex flex-col min-h-0">
 
         {/* 1. Meta/State 上下文面板 (Context Panel) */}
         <div className={`p-4 flex-shrink-0 border-b ${darkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-gray-100'}`}>
@@ -283,6 +273,7 @@ const ChatWindow = ({ data, windowConfig,darkMode }:WindowProps) => {
         </div>
 
       </div>
+      )}
     </div>
   );
 };

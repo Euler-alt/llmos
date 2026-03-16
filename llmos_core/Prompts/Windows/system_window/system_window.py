@@ -1,13 +1,13 @@
 from llmos_core.Prompts.Windows.BaseWindow import BasePromptWindow
 from llmos_core.Prompts.Windows.heap_window.heap_window import HeapPromptWindow
 from llmos_core.Prompts.Windows.stack_window.stack_window import StackPromptWindow
-from llmos_core.Prompts.Windows.static_window.static_window import KernelPromptWindow,CodePromptWindow
+from llmos_core.Prompts.Windows.static_window import KernelPromptWindow, CodePromptWindow
 
-@BasePromptWindow.register('system_window')
+
 class SystemPromptWindow(BasePromptWindow):
 
-    def __init__(self, kernel_file=None,heap_file=None,stack_file=None,code_file=None):
-        super().__init__()
+    def __init__(self, window_title="system_window", kernel_file=None,heap_file=None,stack_file=None,code_file=None):
+        super().__init__(window_title=window_title)
         self.kernelPromptWindow = KernelPromptWindow(kernel_file)
         self.heapPromptWindow = HeapPromptWindow(heap_file)
         self.stackPromptWindow = StackPromptWindow(stack_file)
@@ -37,17 +37,17 @@ class SystemPromptWindow(BasePromptWindow):
     def get_snapshot(self):
         snapshot = {}
         for window in self.Windows:
-            snapshot.update({window.window_name:window.get_snapshot()})
+            snapshot.update({window.window_title:window.get_snapshot()})
         return snapshot
 
     def get_descriptions(self):
         descriptions = {}
         for window in self.Windows:
-            descriptions.update({window.window_name:window.export_meta_prompt()})
+            descriptions.update({window.window_title:window.export_meta_prompt()})
         return descriptions
 
     def get_state_snapshot(self):
         state_snapshot = {}
         for window in self.Windows:
-            state_snapshot.update({window.window_name:window.export_state_prompt()})
+            state_snapshot.update({window.window_title:window.export_state_prompt()})
         return state_snapshot

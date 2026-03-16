@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-
-from abc import ABC, abstractmethod
+from typing import List, Dict, Any, Callable
+from llmos_core.schema import WindowSnapshot, ToolDefinition
 
 
 class BasePromptWindow(ABC):
@@ -15,71 +15,34 @@ class BasePromptWindow(ABC):
     ✅ 提供 handler 分发机制，使模型的 function call 能调用该模块的能力。
     """
 
-    # 用于存储已注册的窗口名 -> 窗口类
-    registered_windows = {}
-
-    def __init__(self, window_name=""):
+    def __init__(self, window_title=""):
         """
-        :param window_name: 模块名称，用于识别模块、打印状态或从快照中区分
+        :param window_title: 窗口标题，对应前端展示的名称
         """
-        self.handlers = {}  # 各模块暴露给 LLM 的处理方法，例如 function call 的入口
-        if window_name is None or window_name == "":
-            window_name = "undefined_windowName"
-        self.window_name = window_name
+        self.handlers: Dict[str, Callable] = {}  # 各模块暴露给 LLM 的处理方法，例如 function call 的入口
+        if window_title is None or window_title == "":
+            window_title = "undefined_window"
+        self.window_title = window_title
 
-    @abstractmethod
-    def forward(self, *args, **kwargs):
+    def forward(self, *args, **kwargs) -> str:
         """
         将当前模块的提示内容序列化为字符串。
-        子类需要实现自己的提示词输出逻辑。
         默认行为是输出 meta prompt + state prompt 的组合。
-
-        :return: str，最终用于拼接到大模型输入的提示词片段
         """
+        meta_prompt = self.export_meta_prompt()
+        state_prompt = self.export_state_prompt()
+
+        # 仅当 meta 或 state 有内容时才生成窗口
+        if not meta_prompt and not state_prompt:
+            return ""
+
         return (f"\n"
-                f"<WINDOW START: {self.window_name}>\n"
+                f"<WINDOW START: {self.window_title}>\n"
                 f"META:\n"
-                f"{self.export_meta_prompt()}\n"
+                f"{meta_prompt}\n"
                 f"STATE:\n"
-                f"{self.export_state_prompt()}]\n"
-                f"<WINDOW END: {self.window_name}>\n")
-
-    @classmethod
-    def register(cls, *window_names):
-        """
-        装饰器：将子类绑定到指定窗口名。
-        使用示例：
-
-            @BasePromptWindow.register("memory", "记忆模块")
-            class MemoryWindow(BasePromptWindow):
-                ...
-
-        :param window_names: 一个或多个用于标识该窗口的名称（字符串或 Enum）
-        :return: 装饰器函数
-        """
-
-        def decorator(subclass):
-            for name in window_names:
-                normalized_name = str(name)  # 支持 Enum / 字符串统一处理
-                cls.registered_windows[normalized_name] = subclass
-            return subclass
-
-        return decorator
-
-    @classmethod
-    def from_name(cls, name, **kwargs):
-        """
-        根据名称实例化已注册的窗口类。
-        允许动态构建模块，例如从配置或 JSON 加载。
-
-        :param name: 注册过的窗口名称（字符串或 Enum）
-        :param kwargs: 传给子类构造函数的参数
-        :return: 对应窗口类的实例
-        """
-        normalized_name = str(name)
-        if normalized_name not in cls.registered_windows:
-            raise ValueError(f"Window '{normalized_name}' not registered.")
-        return cls.registered_windows[normalized_name](**kwargs)
+                f"{state_prompt}\n"
+                f"<WINDOW END: {self.window_title}>\n")
 
     def handle_call(self, module_call: str, *args, **kwargs):
         """
@@ -88,7 +51,7 @@ class BasePromptWindow(ABC):
         名称 module_call 用来查找该窗口是否提供对应的处理方法。
 
         :param module_call: 函数名（字符串），应注册在 self.handlers 字典中
-        :return: 调用处理结果（通常是dict，用于返回给模型）
+        :return: 调用处理结果（通常是 Any，用于返回给模型）
         """
         if module_call in self.handlers:
             return self.handlers[module_call](*args, **kwargs)
@@ -97,9 +60,17 @@ class BasePromptWindow(ABC):
                 f"Handler for {module_call} not found in {self.__class__.__name__}"
             )
 
+    def get_tool_definitions(self) -> List[ToolDefinition]:
+        """
+        返回该窗口提供的所有外部工具定义，用于 LLM API 的 tools 参数。
+        默认不提供任何工具。仅需要调用外部环境的窗口需要重写此方法。
+        """
+        return []
+
     def export_meta_prompt(self) -> str:
         """
         返回模块的“元提示词”部分，用于描述模块目的、功能、使用规范等。
+        对于内部调用（JSON Syscall），函数定义应在此处说明。
         可以为空；子类可覆盖。
         """
         return ""
@@ -112,66 +83,50 @@ class BasePromptWindow(ABC):
         """
         return ""
 
-    def export_handlers(self):
+    def export_handlers(self) -> Dict[str, Callable]:
         """
         返回该窗口提供的 function call 可调用表。
-        默认空字典，子类需要返回类似：
-            {
-                "update_memory": self.update_memory,
-                "reset": self.reset_state
-            }
+        默认返回 self.handlers。
         """
-        return {}
+        return self.handlers
 
-    def get_divided_snapshot(self) -> dict[str, dict[str, str]]:
+    def get_divided_snapshot(self) -> WindowSnapshot:
         """
         拿到更结构化的快照：meta 与 state 分别展示。
         用于可视化、存储、调试或 Web UI 显示。
-
-        :return: {
-            "window_name": {
-                "meta": "...",
-                "state": "..."
-            }
-        }
         """
-        return {
-            self.window_name: {
-                "meta": self.export_meta_prompt(),
-                "state": self.export_state_prompt(),
-            }
-        }
+        # 将 tool definitions 格式化为 meta 描述
+        tools = self.get_tool_definitions()
+        meta_desc = "\n".join([f"- {t.name}: {t.description}" for t in tools]) if tools else self.export_meta_prompt()
+        return WindowSnapshot(
+            meta=meta_desc,
+            state=self.export_state_prompt(),
+        )
 
-    def get_snapshot(self) -> dict[str, str]:
+    def get_snapshot(self) -> Dict[str, str]:
         """
         返回合并后的提示词快照（单一字符串形式）。
         一般用于展示最终拼接内容。
 
-        :return: { "window_name": "full_forward_text" }
+        :return: { "window_title": "full_forward_text" }
         """
         return {
-            self.window_name: self.forward()
+            self.window_title: self.forward()
         }
 
-@BasePromptWindow.register("NullWindow")
 class NullSystemWindow(BasePromptWindow):
-    def __init__(self):
-        super().__init__(window_name="null_window")
+    def __init__(self, window_title="null_window"):
+        super().__init__(window_title=window_title)
 
-    def forward(self):
-        return super().forward()  # 明确返回空内容
+    def forward(self, *args, **kwargs) -> str:
+        return ""  # 明确返回空内容
 
-    def export_meta_prompt(self):
+    def export_meta_prompt(self) -> str:
         return ""
 
-    def export_state_prompt(self):
+    def export_state_prompt(self) -> str:
         return ""
 
-    def get_divided_snapshot(self):
-        return {
-            self.window_name: {
-                "meta": "",
-                "state": "",
-            }
-        }
+    def get_divided_snapshot(self) -> WindowSnapshot:
+        return WindowSnapshot(meta="", state="")
 

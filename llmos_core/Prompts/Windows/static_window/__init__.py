@@ -1,1 +1,2 @@
-from .static_window import KernelPromptWindow,CodePromptWindow
+from .code_window import CodePromptWindow
+from .kernel_window import KernelPromptWindow

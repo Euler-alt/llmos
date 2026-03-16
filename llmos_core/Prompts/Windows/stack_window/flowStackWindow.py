@@ -1,8 +1,10 @@
+import json
 from pathlib import Path
 from typing import List, Dict, Any
 
 from llmos_core.Prompts.Windows.BaseWindow import BasePromptWindow
 from llmos_core.logger import LogEvent, RecordType
+from llmos_core.schema import ToolDefinition
 
 META_DIR = Path(__file__).parent
 META_FILE = META_DIR / 'flowStack_description.json'
@@ -17,12 +19,12 @@ class FrameLogger:
         self.records: List[LogEvent] = []
         self.maxlen = maxlen
 
-    def log(self, log_event:LogEvent):
+    def log(self, log_event: LogEvent):
         """记录一次事件"""
         self.records.append(log_event)
         if len(self.records) > self.maxlen:
             self.records.pop(0)
-        print(log_event.render())  # 你也可以换成写文件、消息总线等
+        # print(log_event.render())  # 你也可以换成写文件、消息总线等
         return log_event
 
     def render_recent(self, n=3):
@@ -75,20 +77,34 @@ class Frame:
     def set_variables(self, **kwargs):
         self.variables.update(kwargs)
 
-    def set_instruction(self, instruction='',**kwargs):
+    def set_instruction(self, instruction='', **kwargs):
         self.instruction = instruction
 
 # ========== 【主窗口类：FlowStackPromptWindow】 ==========
-@BasePromptWindow.register('flowStack', 'stack')
-class FlowStackPromptWindow(BasePromptWindow):
+from .stack_window import StackPromptWindow
 
-    def __init__(self, window_name='FlowStackWindow'):
-        super().__init__(window_name=window_name)
+class FlowStackPromptWindow(StackPromptWindow):
+
+    def __init__(self, window_title='FlowStackWindow'):
+        super().__init__(window_title=window_title)
         self.file_path = META_FILE
         with open(self.file_path, 'r') as f:
-            self.description = f.read()
+            self.meta_data = json.load(f)
         self.stack: List[Frame] = []
         self._init_root_frame()
+
+    def export_state_prompt(self):
+        """覆盖基类的状态输出，使用 Frame 的 render_text"""
+        if not self.stack:
+            return "### STACK EMPTY ###\n"
+
+        parts = [frame.render_text() for frame in self.stack]
+        return "### FLOW STACK DATA ###\n" + "\n".join(parts)
+
+    def record_event(self, log_event: LogEvent):
+        """在当前栈帧记录事件"""
+        if self.stack:
+            self.stack[-1].record_event(log_event)
 
     def forward(self, *args, **kwargs):
         return super().forward(*args, **kwargs)
@@ -97,53 +113,49 @@ class FlowStackPromptWindow(BasePromptWindow):
         root = Frame("ROOT", "主任务根帧（永不弹出）")
         self.stack.append(root)
 
-    # === 栈操作 ===
     def _stack_push(self, *args, **kwargs):
-        name = kwargs.get("name")
-        desc = kwargs.get("description")
-        inst = kwargs.get("instruction")
-        ret_key = kwargs.get("ret_key")
-        if not desc or not inst:
-            return {"status": "error", "reason": "stack_push requires 'description' and 'instruction'"}
-
-        frame = Frame(name or f"task_{len(self.stack)}", desc, kwargs.get("variables", {}),inst,ret_key=ret_key)
-        #记录到当前帧
-        logData = {'func_name':'stack_push','subframename':name or 'not set','mission':desc}
-        log_event = LogEvent(RecordType.prompt_call, data=logData)
+        frame = Frame(
+            name=kwargs.get("name", f"func_{len(self.stack)}"),
+            description=kwargs.get("description", ""),
+            variables=kwargs.get("variables", {}),
+            instruction=kwargs.get("instruction", ""),
+            ret_key=kwargs.get("ret_key", None)
+        )
         self.stack.append(frame)
         return {"status": "ok", "stack_size": len(self.stack)}
 
     def _stack_pop(self, *args, **kwargs):
         if len(self.stack) <= 1:
-            return {"status": "warning", "reason": "cannot pop root frame"}
-        popped = self.stack.pop()
-        result = kwargs.get("result")
-        ret_key = kwargs.get("ret_key")
-        if not ret_key:
-            ret_key = popped.ret_key or None
-        if ret_key and result is not None and self.stack:
-            self.stack[-1].variables[ret_key] = result
-        else:
-            self.stack[-1].variables[f'子帧{popped.name} pop with:'] = None
-        return {'subframename':popped.name,'mission':popped.description,"status": "ok", "message": f"Frame '{popped.name}' completed"}
+            return {"status": "error", "reason": "cannot pop root frame"}
+        frame = self.stack.pop()
+        result = kwargs.get("result", None)
+        # 如果有 ret_key，尝试把结果写回前一帧的 variables
+        if frame.ret_key and self.stack:
+            self.stack[-1].variables[frame.ret_key] = result
+        return {
+            "status": "ok",
+            "popped": frame.name,
+            "result": result,
+            "stack_size": len(self.stack),
+        }
 
-    # === 调用记录接口（代理给 Frame） ===
-    def record_event(self, log_event:LogEvent):
+    def _stack_setvar(self, *args, **kwargs):
+        new_vars = kwargs.get("variables", {})
         if not self.stack:
-            return {"status": "error", "reason": "no active frame"}
-        return self.stack[-1].record_event(log_event)
+            return {"status": "error", "reason": "stack empty"}
+        self.stack[-1].set_variables(**new_vars)
+        return {"status": "ok", "updated": list(new_vars.keys())}
 
-    # === 状态导出 ===
-    def export_state_prompt(self):
-        return "### STACK DATA ###\n" + "\n".join(f.render_text() for f in self.stack)
-
-    def export_meta_prompt(self):
-        return f"{self.description}\n"
+    def _stack_setinstruction(self, *args, **kwargs):
+        instruction = kwargs.get("instruction", "")
+        if not self.stack:
+            return {"status": "error", "reason": "stack empty"}
+        self.stack[-1].set_instruction(instruction)
+        return {"status": "ok", "instruction": instruction}
 
     def export_handlers(self):
-        return {
-            'stack_push': self._stack_push,
-            'stack_pop': self._stack_pop,
-            'stack_set_instruction': lambda *a, **kw: self.stack[-1].set_instruction(**kw),
-            'stack_setvar': lambda *a, **kw: self.stack[-1].set_variables(instuction=kw.get("variables", {})),
-        }
+        handlers = super().export_handlers()
+        handlers.update({
+            "stack_setinstruction": self._stack_setinstruction,
+        })
+        return handlers

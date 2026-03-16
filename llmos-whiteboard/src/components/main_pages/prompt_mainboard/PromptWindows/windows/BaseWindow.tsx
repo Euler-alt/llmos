@@ -7,8 +7,9 @@ import {WindowProps} from "../types/WindowConfig";
 /**
  * BaseWindow.tsx 组件，通过 theme 属性接收预制的主题名称。
  */
-export const BaseWindow = ({ data, darkMode, windowConfig}:WindowProps) => {
+export const BaseWindow = ({ data, darkMode, windowConfig, actions}:WindowProps & {actions?: React.ReactNode}) => {
   const [isMaximized, setIsMaximized] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState('state');
   const [isUpdated, setIsUpdated] = useState(false);
 
@@ -83,50 +84,61 @@ export const BaseWindow = ({ data, darkMode, windowConfig}:WindowProps) => {
         title={windowConfig?.windowTitle || "窗口 (Window)"}
         isMaximized={isMaximized}
         setIsMaximized={setIsMaximized}
-        actions={byteCount}
+        isCollapsed={isCollapsed}
+        setIsCollapsed={setIsCollapsed}
+        actions={
+          <>
+            {actions}
+            {byteCount}
+          </>
+        }
         headerClass={headerClass}
       />
 
-      {/* 2. 组合：WindowTabs，传入 accentClass 来定制激活颜色 */}
-      <WindowTabs
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        darkMode={darkMode}
-        accentClass={accentClass}
-      />
-
-      {/* 3. 组合：WindowContent，注入 Tab 内容 */}
-      <WindowContent>
-        {activeTab === 'meta' && (
-          <TextBox
-            value={meta}
-            onChange={(e) => event_call('code', { ...data, meta: e.target.value })}
+      {!isCollapsed && (
+        <>
+          {/* 2. 组合：WindowTabs，传入 accentClass 来定制激活颜色 */}
+          <WindowTabs
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
             darkMode={darkMode}
-            placeholder="输入代码窗口的meta信息..."
-            rows={isMaximized ? 20 : 6}
-            focusRingClass={focusRingClass} // 传入 focusRingClass
-            isMaximized={isMaximized} // 传递放大状态
+            accentClass={accentClass}
           />
-        )}
 
-        {activeTab === 'state' && (
-          <TextBox
-            value={state}
-            onChange={(e) => event_call('code', { ...data, state: e.target.value })}
-            darkMode={darkMode}
-            placeholder={`输入代码...`}
-            rows={isMaximized ? 20 : 8}
-            focusRingClass={focusRingClass} // 传入 focusRingClass
-            isMaximized={isMaximized} // 传递放大状态
-          />
-        )}
-      </WindowContent>
+          {/* 3. 组合：WindowContent，注入 Tab 内容 */}
+          <WindowContent>
+            {activeTab === 'meta' && (
+              <TextBox
+                value={meta}
+                onChange={(e) => event_call('code', { ...data, meta: e.target.value })}
+                darkMode={darkMode}
+                placeholder="输入代码窗口的meta信息..."
+                rows={isMaximized ? 20 : 6}
+                focusRingClass={focusRingClass} // 传入 focusRingClass
+                isMaximized={isMaximized} // 传递放大状态
+              />
+            )}
 
-      {/* 底部状态栏 */}
-      <div className={`p-3 border-t text-sm ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-100 border-gray-200'} flex justify-between`}>
-          <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>Meta: {meta?.length || 0} 字符</span>
-          <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>State: {state?.length || 0} 字符</span>
-      </div>
+            {activeTab === 'state' && (
+              <TextBox
+                value={state}
+                onChange={(e) => event_call('code', { ...data, state: e.target.value })}
+                darkMode={darkMode}
+                placeholder={`输入代码...`}
+                rows={isMaximized ? 20 : 8}
+                focusRingClass={focusRingClass} // 传入 focusRingClass
+                isMaximized={isMaximized} // 传递放大状态
+              />
+            )}
+          </WindowContent>
+
+          {/* 底部状态栏 */}
+          <div className={`p-3 border-t text-sm ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-100 border-gray-200'} flex justify-between`}>
+              <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>Meta: {meta?.length || 0} 字符</span>
+              <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>State: {state?.length || 0} 字符</span>
+          </div>
+        </>
+      )}
 
     </div>
   );

@@ -27,7 +27,7 @@ function createWindowConfig(config: Partial<WindowConfig> = {}): WindowConfig {
 
 // 组件注册表 - 前端声明可用的组件类型
 const WindowsRegistry:Record<string,RegistryEntry> = {
-  chat:{
+  ChatWindow:{
     component:ChatWindow,
     defaultConfig: createWindowConfig({
       windowTitle: '对话窗口',
@@ -37,7 +37,7 @@ const WindowsRegistry:Record<string,RegistryEntry> = {
       tabs: ['meta', 'state','chat']
     })
   },
-  text:{
+  TextWindow:{
     component: TextWindow,
     defaultConfig:createWindowConfig({
       windowTitle: '通用文本窗口',
@@ -47,7 +47,7 @@ const WindowsRegistry:Record<string,RegistryEntry> = {
       tabs: ['meta', 'state']
     })
   },
-  kernel: {
+  KernelWindow: {
     component: KernelWindow,
     defaultConfig: createWindowConfig({
       windowTitle: '内核窗口 (Kernel)',
@@ -57,7 +57,7 @@ const WindowsRegistry:Record<string,RegistryEntry> = {
       tabs: ['meta', 'state']
     })
   },
-  heap: {
+  HeapWindow: {
     component: HeapWindow,
     defaultConfig: createWindowConfig({
       windowTitle: '堆窗口 (Heap)',
@@ -67,7 +67,7 @@ const WindowsRegistry:Record<string,RegistryEntry> = {
       tabs: ['meta', 'state']
     })
   },
-  stack: {
+  StackWindow: {
     component: StackWindow,
     defaultConfig: createWindowConfig({
       windowTitle: '栈模块 (Stack)',
@@ -77,7 +77,7 @@ const WindowsRegistry:Record<string,RegistryEntry> = {
       tabs: ['meta', 'state']
     })
   },
-  code: {
+  CodeWindow: {
     component: CodeWindow,
     defaultConfig: createWindowConfig({
       windowTitle: '代码窗口 (Code)',

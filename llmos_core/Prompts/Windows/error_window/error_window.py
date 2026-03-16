@@ -6,14 +6,12 @@ from datetime import datetime
 META_DIR = Path(__file__).parent
 META_FILE = META_DIR / 'error_description.json'
 
-@BasePromptWindow.register('error_window', 'ErrorWindow')
 class ErrorWindow(BasePromptWindow):
     """
-    异常窗口 - 专门记录大模型回复产生的异常信息
+    ErrorWindow
     """
-
-    def __init__(self, window_name='ErrorWindow'):
-        super().__init__(window_name=window_name)
+    def __init__(self, window_title='ErrorWindow'):
+        super().__init__(window_title=window_title)
         self.file_path = META_FILE
         
         # 加载异常窗口的描述文件

@@ -1,4 +1,7 @@
+import json
+from typing import List
 from llmos_core.Prompts.Windows.BaseWindow import BasePromptWindow
+from llmos_core.schema import ToolDefinition
 from alfworld.agents.environment import get_environment
 import yaml
 import os
@@ -12,14 +15,13 @@ META_DIR = Path(__file__).parent
 META_FILE = META_DIR / 'alfworld_description.json'
 
 
-@BasePromptWindow.register("alfworld")
 class ALFworldWindow(BasePromptWindow):
-    def __init__(self, window_name='ALFWorld'):
-        super().__init__(window_name=window_name)
+    def __init__(self, window_title='ALFWorld'):
+        super().__init__(window_title=window_title)
 
-        # 0.加载meta提示词
+        # 0.加载meta配置
         with open(META_FILE, 'r') as f:
-            self.meta = f.read()
+            self.meta_data = json.load(f)
 
         # 1. 加载配置
         config_path = os.path.join("/root/PycharmProjects/alfworld/configs", "base_config.yaml")
@@ -44,13 +46,38 @@ class ALFworldWindow(BasePromptWindow):
         self.last_reward = 0
         self.done = False
 
+    def export_meta_prompt(self) -> str:
+        """ALFWorld 窗口不提供内部调用，仅提供外部工具。"""
+        return ""
+
+    def get_tool_definitions(self) -> List[ToolDefinition]:
+        """从 JSON 配置中解析工具定义"""
+        tools = []
+        for func in self.meta_data.get("functions", []):
+            properties = {}
+            required = []
+            for param_name, param_desc in func.get("parameters", {}).items():
+                properties[param_name] = {"type": "string", "description": param_desc}
+                required.append(param_name)
+            
+            tools.append(ToolDefinition(
+                name=func["name"],
+                description=func["description"],
+                parameters={
+                    "type": "object",
+                    "properties": properties,
+                    "required": required
+                }
+            ))
+        return tools
+
     def forward(self, *args, **kwargs):
-        """主入口，返回完整的 Meta 和 State Prompt。"""
+        """主入口，仅返回 State Prompt。"""
         return super().forward()
 
     def export_meta_prompt(self) -> str:
-        """定义大模型的角色和工具调用说明。"""
-        return self.meta
+        """[已弃用]"""
+        return ""
 
     def export_state_prompt(self) -> str:
         """将当前环境状态格式化为 Prompt 文本。"""
