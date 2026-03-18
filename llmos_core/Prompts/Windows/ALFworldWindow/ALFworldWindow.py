@@ -166,7 +166,25 @@ class ALFworldWindow(BasePromptWindow):
                          "admissible_commands": []}
             print(f"Generic Error during ALF_step: {traceback.format_exc()}")
 
-        return {'execute_action':action}
+        if self.info.get("error"):
+            # 如果出错了，摘要直接显示错误核心
+            summary = f"❌ 动作执行失败: {self.obs}"
+        else:
+            # 成功执行时，摘要 = 动作 + 真实的观察结果
+            # 限制长度防止栈窗口过载，但要保留核心语义
+            clean_obs = self.obs.strip().replace('\n', ' ')
+            if len(clean_obs) > 150:
+                clean_obs = clean_obs[:147] + "..."
+
+            summary = f"执行动作 '{action}' -> 观察到: {clean_obs}"
+
+        return {
+            'execute_action': action,
+            'reward': self.last_reward,
+            'done': self.done,
+            # 这个字段会被你的 LogEvent 捕获并渲染到栈窗口
+            '__summary__': summary
+        }
 
     def reset(self):
         """重置环境并清除状态。"""

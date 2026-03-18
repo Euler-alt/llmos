@@ -30,6 +30,7 @@ class ToolDefinition:
 class ToolCallResult:
     func_name: str
     result: Any
+    summary: str = "" # 新增语义摘要字段
     reasoning: str = ""
     call_kwargs: Dict[str, Any] = field(default_factory=dict)
     status: str = "success"
@@ -46,9 +47,3 @@ class ProgramRunResult:
     raw_response: str
     parsed_calls: List[Any]
 
-@dataclass
-class StackFrame:
-    name: str
-    description: str
-    variables: Dict[str, Any] = field(default_factory=dict)
-    fail_reason: Optional[str] = None

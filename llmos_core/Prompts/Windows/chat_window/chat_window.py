@@ -168,6 +168,7 @@ class AsyChatPromptWindow(BasePromptWindow):
         # 如果正在streaming，追加内容
         if self.streaming_message["active"]:
             self.streaming_message["content"] += message
+            summary = f"Streaming reply: {message[:20]}..."
         else:
             # 直接发送
             self.chat_history.append({
@@ -175,13 +176,14 @@ class AsyChatPromptWindow(BasePromptWindow):
                 "content": message,
                 "timestamp": datetime.now().strftime("%H:%M:%S")
             })
+            summary = f"Sent reply: {message[:30]}..."
 
-        return {"status": "ok", "message": message}
+        return {"status": "ok", "message": message, "__summary__": summary}
 
     def _chat_start_streaming(self, *args, **kwargs):
         """LLM调用：开始流式输出"""
         self.streaming_message = {"active": True, "content": ""}
-        return {"status": "streaming_started"}
+        return {"status": "streaming_started", "__summary__": "Started streaming reply"}
 
     def _chat_end_streaming(self, *args, **kwargs):
         """LLM调用：结束流式输出"""
@@ -198,14 +200,16 @@ class AsyChatPromptWindow(BasePromptWindow):
             while self.input_buffer:
                 self.chat_history.append(self.input_buffer.popleft())
 
-        return {"status": "streaming_ended", "buffered_processed": len(self.input_buffer)}
+        return {"status": "streaming_ended", "buffered_processed": len(self.input_buffer), "__summary__": "Finished streaming reply"}
 
     def _chat_check_buffer(self, *args, **kwargs):
         """LLM调用：检查缓冲区"""
+        count = len(self.input_buffer)
         return {
             "status": "ok",
-            "buffer_count": len(self.input_buffer),
-            "messages": [msg["content"] for msg in self.input_buffer]
+            "buffer_count": count,
+            "messages": [msg["content"] for msg in self.input_buffer],
+            "__summary__": f"Checked buffer: found {count} new messages"
         }
 
     def export_handlers(self):

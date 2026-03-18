@@ -1,4 +1,90 @@
 import React, { useState } from 'react';
+import ActionRecord from './ActionRecord';
+
+const HistoryItemContent = ({ item, darkMode }) => {
+  const [activeTab, setActiveTab] = useState('answer');
+
+  const getTabClass = (tab) => `
+    px-3 py-1 text-xs font-medium rounded-t-md transition-all duration-200
+    ${activeTab === tab 
+      ? (darkMode ? 'bg-gray-700 text-blue-400 border-b-2 border-blue-400' : 'bg-white text-blue-600 border-b-2 border-blue-600')
+      : (darkMode ? 'bg-gray-800 text-gray-500 hover:text-gray-300' : 'bg-gray-100 text-gray-400 hover:text-gray-600')
+    }
+  `;
+
+  const result = item.response;
+
+  return (
+    <div className={`p-4 border-t ${darkMode ? 'border-gray-600' : 'border-gray-200'}`}>
+      {/* 选项卡头部 */}
+      <div className="flex border-b mb-4 gap-1">
+        <button 
+          className={getTabClass('answer')}
+          onClick={() => setActiveTab('answer')}
+        >
+          行动记录
+        </button>
+        <button 
+          className={getTabClass('raw')}
+          onClick={() => setActiveTab('raw')}
+        >
+          原始响应
+        </button>
+        <button 
+          className={getTabClass('tools')}
+          onClick={() => setActiveTab('tools')}
+        >
+          工具调用
+        </button>
+      </div>
+
+      {/* 选项卡内容 */}
+      <div className="max-h-96 overflow-y-auto custom-scrollbar">
+        {activeTab === 'answer' && (
+          <div className="space-y-2">
+            {result?.parsed_calls && result.parsed_calls.length > 0 ? (
+              result.parsed_calls.map((call, idx) => (
+                <ActionRecord key={idx} record={call} index={idx} darkMode={darkMode} />
+              ))
+            ) : (
+              <div className="text-center py-8 text-sm opacity-50 italic">暂无行动记录</div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'raw' && (
+          <div className={`p-3 rounded text-sm font-mono whitespace-pre-wrap ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+            {result?.raw_response || "无原始响应"}
+          </div>
+        )}
+
+        {activeTab === 'tools' && (
+          <div className={`p-3 rounded text-sm font-mono whitespace-pre-wrap ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+            {result?.parsed_calls ? JSON.stringify(result.parsed_calls, null, 2) : "无工具调用数据"}
+          </div>
+        )}
+      </div>
+
+      <div className="mt-4 flex justify-between items-center">
+        <div className="text-[10px] opacity-50">
+          Prompt 长度: {item.prompt?.length || 0}
+        </div>
+        <button 
+          className={`px-3 py-1 rounded text-sm ${
+            darkMode 
+              ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+              : 'bg-blue-100 hover:bg-blue-200 text-blue-800'
+          } transition-colors duration-200`}
+          onClick={() => {
+            console.log('恢复历史状态', item);
+          }}
+        >
+          恢复此状态
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const HistoryWindow = ({ history, darkMode }) => {
   const [expandedItem, setExpandedItem] = useState(null);
@@ -70,7 +156,7 @@ const HistoryWindow = ({ history, darkMode }) => {
               onClick={() => toggleExpand(item.id)}
             >
               <div>
-                <span className="font-medium">会话 #{history.length - history.indexOf(item)}</span>
+                <span className="font-medium">会话 #{history.indexOf(item) + 1}</span>
                 <span className="ml-3 text-sm opacity-70">{item.timestamp}</span>
               </div>
               <div>
@@ -87,37 +173,7 @@ const HistoryWindow = ({ history, darkMode }) => {
             </div>
             
             {expandedItem === item.id && (
-              <div className={`p-4 border-t ${darkMode ? 'border-gray-600' : 'border-gray-200'}`}>
-                <div className="mb-3">
-                  <h4 className="font-medium mb-1">提示词</h4>
-                  <div className={`p-2 rounded ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} max-h-40 overflow-y-auto`}>
-                    <pre className="whitespace-pre-wrap text-sm">{item.prompt}</pre>
-                  </div>
-                </div>
-                
-                <div>
-                  <h4 className="font-medium mb-1">响应</h4>
-                  <div className={`p-2 rounded ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} max-h-40 overflow-y-auto`}>
-                    <pre className="whitespace-pre-wrap text-sm">
-                      {item.response?.answer || "无响应数据"}
-                    </pre>
-                  </div>
-                </div>
-                
-                <button 
-                  className={`mt-3 px-3 py-1 rounded text-sm ${
-                    darkMode 
-                      ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                      : 'bg-blue-100 hover:bg-blue-200 text-blue-800'
-                  } transition-colors duration-200`}
-                  onClick={() => {
-                    // 这里可以添加恢复历史状态的功能
-                    console.log('恢复历史状态', item);
-                  }}
-                >
-                  恢复此状态
-                </button>
-              </div>
+              <HistoryItemContent item={item} darkMode={darkMode} />
             )}
           </div>
         ))}

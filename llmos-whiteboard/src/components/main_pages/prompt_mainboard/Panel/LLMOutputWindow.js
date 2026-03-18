@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from 'react';
+import ActionRecord from './ActionRecord';
 
 const LLMOutputWindow = ({ result, darkMode }) => {
-  const [isUpdated, setIsUpdated] = useState(false);
-  const [activeTab, setActiveTab] = useState('raw');
+  const [activeTab, setActiveTab] = useState('answer');
   const [isCopied, setIsCopied] = useState(false);
+  const [isUpdated, setIsUpdated] = useState(false);
 
   useEffect(() => {
     if (!result) return;
     setIsUpdated(true);
-    setActiveTab('raw'); // 新结果时默认显示答案标签页
+    // 优先显示记录，如果没有记录则显示原始响应
+    if (result?.parsed_calls && result.parsed_calls.length > 0) {
+      setActiveTab('answer');
+    } else {
+      setActiveTab('raw');
+    }
     const timer = setTimeout(() => setIsUpdated(false), 500); // 500ms 高亮
     return () => clearTimeout(timer);
   }, [result]);
@@ -96,7 +102,7 @@ const LLMOutputWindow = ({ result, darkMode }) => {
           className={getTabClass('answer')}
           onClick={() => setActiveTab('answer')}
         >
-          答案
+          行动记录
         </button>
         <button 
           className={getTabClass('raw')}
@@ -115,22 +121,26 @@ const LLMOutputWindow = ({ result, darkMode }) => {
       <div className="p-4">
         {activeTab === 'answer' && (
           <div className={`
-            rounded border p-4 min-h-[200px] max-h-96 overflow-y-auto
+            rounded border p-4 min-h-[200px] max-h-[500px] overflow-y-auto
             ${darkMode 
               ? 'bg-gray-700 border-gray-600 text-gray-200' 
               : 'bg-gray-50 border-gray-200 text-gray-800'
             }
           `}>
-            {result?.answer ? (
-              <div className="font-mono whitespace-pre-wrap text-sm">{result.answer}</div>
+            {result?.parsed_calls && result.parsed_calls.length > 0 ? (
+              <div className="space-y-2">
+                {result.parsed_calls.map((call, idx) => (
+                  <ActionRecord key={idx} record={call} index={idx} darkMode={darkMode} />
+                ))}
+              </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-full py-8 text-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className={`h-12 w-12 ${darkMode ? 'text-gray-600' : 'text-gray-300'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
-                <p className="mt-4 text-lg">暂无输出</p>
+                <p className="mt-4 text-lg">暂无行动记录</p>
                 <p className={`mt-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                  点击"调用大模型"按钮获取回答
+                  点击"调用大模型"按钮获取执行结果
                 </p>
               </div>
             )}

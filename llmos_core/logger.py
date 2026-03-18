@@ -45,9 +45,32 @@ class LogEvent:
         else:
             return f"[{self.timestamp}] [{self.event_type.value}] {self.event_type}: {self.data}"
 
-LogEvent.register(RecordType.prompt_call, "调用 {func_name},reasoning:{reasoning} → {result}")
-LogEvent.register(RecordType.error, "raw_response:{raw_response} →❌ {error}")
-LogEvent.register(RecordType.tool_call, "调用 {func_name},reasoning:{reasoning} → {result}")
-LogEvent.register(RecordType.event_call, "外部环境产生了调用 {func_name}")
+# --- 内核指令 (栈操作) ---
+# 重点在于：我的意图是什么 -> 栈变成了什么样
+LogEvent.register(
+    RecordType.prompt_call,
+    "Step #{step}: [Internal Op] {func_name}\n   💡 Reasoning: {reasoning}\n   ✅ Outcome: {result}"
+)
+
+# --- 外部动作 (ALFWorld 交互) ---
+# 重点在于：我做了什么动作 -> 环境给我的真实反馈
+# 这里建议 Handler 返回的 summary 填入 {result}
+LogEvent.register(
+    RecordType.tool_call,
+    "Step #{step}: [Action] {func_name}({call_kwargs}) \n   🔍 Observation: {result}"
+)
+
+# --- 异常处理 ---
+# 重点在于：哪里断了 -> 现场是什么
+LogEvent.register(
+    RecordType.error,
+    "Step #{step}: ❌ ERROR in {func_name}\n   Details: {error}\n   Last Response: {raw_response}"
+)
+
+# --- 外部事件 ---
+LogEvent.register(
+    RecordType.event_call,
+    "🔔 [External Signal]: {func_name} triggered."
+)
 
 

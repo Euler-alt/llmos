@@ -27,8 +27,13 @@ class ThinkWindow(BasePromptWindow):
             return "#No last think"
 
     def new_think(self, *args, **kwargs):
-        self.think_content = kwargs.get('content')
-        return {"status": "ok", "message": "Think updated."}
+        content = kwargs.get('content', '')
+        self.think_content = content
+        return {
+            "status": "ok", 
+            "message": "Think updated.",
+            "__summary__": f"Updated internal thought: {content[:40]}..."
+        }
 
     def export_handlers(self):
         return {

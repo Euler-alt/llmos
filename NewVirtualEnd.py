@@ -137,8 +137,19 @@ async def call_llm(data: LLMCallRequest):
     # 广播更新
     await backend_state.broadcast_update()
     
-    answer = f"这是模拟 LLM 的响应，收到的 prompt 长度: {len(prompt)}"
-    print("finish a call")
+    # 💡 提取第一个行动记录的摘要作为简短回答，如果没有则显示执行成功
+    answer = "执行成功"
+    if result.parsed_calls and len(result.parsed_calls) > 0:
+        first_call = result.parsed_calls[0]
+        # 如果是 ToolCallResult 对象或字典
+        if hasattr(first_call, 'summary'):
+            answer = first_call.summary
+        elif isinstance(first_call, dict) and 'summary' in first_call:
+            answer = first_call['summary']
+        elif isinstance(first_call, dict) and 'result' in first_call:
+            answer = str(first_call['result'])
+
+    print(f"Finish a call. Result summary: {answer[:30]}...")
     
     return {
         "answer": answer,

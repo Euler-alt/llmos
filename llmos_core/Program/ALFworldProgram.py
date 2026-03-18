@@ -13,7 +13,7 @@ class ALFworldProgram(BaseProgram):
         self.promptMainBoard = PromptMainBoard()
         code_window = PromptWindow.from_name(PromptWindow.CodePromptWindow)
         heap_window = PromptWindow.from_name(PromptWindow.HeapPromptWindow)
-        stack_window = PromptWindow.from_name(PromptWindow.StackPromptWindow)
+        stack_window = PromptWindow.from_name(PromptWindow.FlowStackPromptWindow)
         alfworld_window = PromptWindow.from_name(PromptWindow.ALFWorldWindow)
         chat_window = PromptWindow.from_name(PromptWindow.ChatPromptWindow)
         kernel_window = PromptWindow.from_name(PromptWindow.KernelPromptWindow)

@@ -7,6 +7,7 @@ from llmos_core.Prompts.Windows import BasePromptWindow,FlowStackPromptWindow
 from llmos_core.Prompts.Windows.BaseWindow import NullSystemWindow
 from typing import List, Union
 
+from llmos_core.Prompts.Windows.stack_window import StackPromptWindow
 from llmos_core.logger import LogEvent, RecordType
 from llmos_core.ui import WindowConfig
 from llmos_core.schema import LLMOSCall, ToolCallResult, ToolDefinition
@@ -235,10 +236,18 @@ class PromptMainBoard:
             try:
                 result = self.handlers[func_name](**kwargs)
 
+                # 💡 提取语义摘要 (优先从返回值中获取)
+                summary = ""
+                if isinstance(result, dict) and "__summary__" in result:
+                    summary = result.pop("__summary__") # 移除摘要字段，保留核心结果
+                else:
+                    summary = str(result)
+
                 call_result = ToolCallResult(
                     func_name=func_name,
                     reasoning=reasoning,
                     result=result,
+                    summary=summary,
                     call_kwargs=kwargs,
                     status="success"
                 )
@@ -249,7 +258,7 @@ class PromptMainBoard:
                         event_type=event_type,
                         func_name=call_result.func_name,
                         reasoning=call_result.reasoning,
-                        result=str(call_result.result),
+                        result=call_result.summary, # 使用摘要作为 Outcome 展示
                         call_kwargs=call_result.call_kwargs,
                         status=call_result.status
                     )
@@ -288,26 +297,9 @@ class PromptMainBoard:
                 self._submit_event(not_found_log)
             return ToolCallResult(func_name=func_name, result=msg, status="error")
 
-    def apply_response(self, response:str,auto_record=True):
-        """解析模型回复，并执行其中的prompt调用"""
-        calls = []
-        try:
-            calls = parse_response(response)
-            for call in calls:
-                self.handle_call(call,auto_record)
-        except Exception as e:
-            if auto_record:
-                record_data = {
-                    "response": response,
-                    "error": str(e),
-                }
-                log_event = LogEvent(RecordType.error, **record_data)
-                self._submit_event(log_event)
-        return calls
-
     def _submit_event(self, log_event:LogEvent):
         """
-        记录一次正常调用
+        记录一次调用结果
         :type log_event: LogEvent
         :return:
         """

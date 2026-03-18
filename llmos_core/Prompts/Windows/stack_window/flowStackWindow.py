@@ -9,7 +9,7 @@ from llmos_core.schema import ToolDefinition
 META_DIR = Path(__file__).parent
 META_FILE = META_DIR / 'flowStack_description.json'
 
-
+RECORD_STEP = 10
 # =========================================================
 # 🧱 FrameLogger：封装执行历史记录
 # =========================================================
@@ -24,7 +24,6 @@ class FrameLogger:
         self.records.append(log_event)
         if len(self.records) > self.maxlen:
             self.records.pop(0)
-        # print(log_event.render())  # 你也可以换成写文件、消息总线等
         return log_event
 
     def render_recent(self, n=3):
@@ -36,7 +35,6 @@ class FrameLogger:
 
     def clear(self):
         self.records.clear()
-
 
 # =========================================================
 # 🧩 Frame：栈帧对象（包含自己的 StackLogger）
@@ -69,7 +67,7 @@ class Frame:
             lines.append(f"-> INSTRUCTION: {self.instruction}")
         if len(self.logger):
             lines.append("[Execution History]")
-            lines.append(self.logger.render_recent(3))
+            lines.append(self.logger.render_recent(RECORD_STEP))
         if self.fail_reason:
             lines.append(f"[Fail reason: {self.fail_reason}]")
         return "\n".join(lines)
@@ -114,15 +112,21 @@ class FlowStackPromptWindow(StackPromptWindow):
         self.stack.append(root)
 
     def _stack_push(self, *args, **kwargs):
+        name = kwargs.get("name", f"func_{len(self.stack)}")
+        desc = kwargs.get("description", "")
         frame = Frame(
-            name=kwargs.get("name", f"func_{len(self.stack)}"),
-            description=kwargs.get("description", ""),
+            name=name,
+            description=desc,
             variables=kwargs.get("variables", {}),
             instruction=kwargs.get("instruction", ""),
             ret_key=kwargs.get("ret_key", None)
         )
         self.stack.append(frame)
-        return {"status": "ok", "stack_size": len(self.stack)}
+        return {
+            "status": "ok",
+            "stack_size": len(self.stack),
+            "__summary__": f"Pushed new frame '{name}' (Purpose: {desc})"
+        }
 
     def _stack_pop(self, *args, **kwargs):
         if len(self.stack) <= 1:
@@ -137,6 +141,7 @@ class FlowStackPromptWindow(StackPromptWindow):
             "popped": frame.name,
             "result": result,
             "stack_size": len(self.stack),
+            "__summary__": f"Popped frame '{frame.name}' (Result: {result})"
         }
 
     def _stack_setvar(self, *args, **kwargs):
@@ -144,18 +149,26 @@ class FlowStackPromptWindow(StackPromptWindow):
         if not self.stack:
             return {"status": "error", "reason": "stack empty"}
         self.stack[-1].set_variables(**new_vars)
-        return {"status": "ok", "updated": list(new_vars.keys())}
+        return {
+            "status": "ok",
+            "updated": list(new_vars.keys()),
+            "__summary__": f"Updated variables in '{self.stack[-1].name}': {list(new_vars.keys())}"
+        }
 
-    def _stack_setinstruction(self, *args, **kwargs):
+    def _stack_set_instruction(self, *args, **kwargs):
         instruction = kwargs.get("instruction", "")
         if not self.stack:
             return {"status": "error", "reason": "stack empty"}
         self.stack[-1].set_instruction(instruction)
-        return {"status": "ok", "instruction": instruction}
+        return {
+            "status": "ok",
+            "instruction": instruction,
+            "__summary__": f"Set instruction for '{self.stack[-1].name}': {instruction}"
+        }
 
     def export_handlers(self):
         handlers = super().export_handlers()
         handlers.update({
-            "stack_setinstruction": self._stack_setinstruction,
+            "stack_set_instruction": self._stack_set_instruction,
         })
         return handlers

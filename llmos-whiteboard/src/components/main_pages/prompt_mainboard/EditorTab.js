@@ -76,21 +76,27 @@ ${typeof win.data?.state === 'object' ? JSON.stringify(win.data.state, null, 2) 
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div className="space-y-6">
-        <DynamicWindowFactory
-          windows={windows}
-          darkMode={darkMode}
-        />
+    <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-100px)] overflow-hidden">
+      {/* 左侧：窗口展示，独立滚动 */}
+      <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+        <div className="space-y-6">
+          <DynamicWindowFactory
+            windows={windows}
+            darkMode={darkMode}
+          />
+        </div>
       </div>
       
-      <div className="space-y-6">
-        <PromptDisplay prompt={fullPrompt} darkMode={darkMode} />
-        
-        <LLMControlPanel
-          darkMode={darkMode}
-          fullPrompt={fullPrompt}
-        />
+      {/* 右侧：控制面板与提示词显示，独立滚动 */}
+      <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+        <div className="space-y-6">
+          <PromptDisplay prompt={fullPrompt} darkMode={darkMode} />
+          
+          <LLMControlPanel
+            darkMode={darkMode}
+            fullPrompt={fullPrompt}
+          />
+        </div>
       </div>
     </div>
   );

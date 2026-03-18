@@ -1,11 +1,20 @@
 import json
 from llmos_core.Prompts.Windows.BaseWindow import BasePromptWindow
-from llmos_core.schema import ToolDefinition, StackFrame
+from llmos_core.schema import ToolDefinition
 from pathlib import Path
-from typing import List, Dict, Any
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
 
 META_DIR = Path(__file__).parent
 META_FILE = META_DIR / 'stack_description.json'
+
+
+@dataclass
+class StackFrame:
+    name: str
+    description: str
+    variables: Dict[str, Any] = field(default_factory=dict)
+    fail_reason: Optional[str] = None
 
 class StackPromptWindow(BasePromptWindow):
 
@@ -19,9 +28,6 @@ class StackPromptWindow(BasePromptWindow):
     def export_meta_prompt(self):
         """栈描述部分"""
         return json.dumps(self.meta_data, indent=2, ensure_ascii=False)
-
-    def get_tool_definitions(self) -> List[ToolDefinition]:
-        return []
 
     def export_state_prompt(self):
         """栈帧数据部分"""
