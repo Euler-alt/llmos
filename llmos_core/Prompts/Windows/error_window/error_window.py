@@ -11,15 +11,7 @@ class ErrorWindow(BasePromptWindow):
     ErrorWindow
     """
     def __init__(self, window_title='ErrorWindow'):
-        super().__init__(window_title=window_title)
-        self.file_path = META_FILE
-        
-        # 加载异常窗口的描述文件
-        try:
-            with open(self.file_path, 'r', encoding='utf-8') as f:
-                self.description = f.read()
-        except FileNotFoundError:
-            self.description = "异常窗口 - 用于记录和跟踪大模型产生的异常信息"
+        super().__init__(window_title=window_title, meta_file=META_FILE)
         
         # 异常记录数据结构
         self.error_records: List[Dict[str, Any]] = []
@@ -34,9 +26,12 @@ class ErrorWindow(BasePromptWindow):
 
     def export_meta_prompt(self) -> str:
         """异常窗口的元提示词 - 描述窗口功能和使用规范"""
+        # 💡 基类现在通过 self.meta_data 自动处理
+        description = super().export_meta_prompt() or "异常窗口 - 用于记录和跟踪大模型产生的异常信息"
+        
         return f"""
 ### 异常窗口功能说明 ###
-{self.description}
+{description}
 
 功能:
 - 记录大模型回复过程中产生的各种异常

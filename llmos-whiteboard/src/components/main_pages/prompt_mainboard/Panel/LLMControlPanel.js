@@ -1,4 +1,4 @@
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {API_BASE_URL} from "../../../../config/api";
 import LLMOutputWindow from "./LLMOutputWindow";
 import HistoryWindow from "./HistoryWindow";
@@ -8,6 +8,7 @@ const LLMControlPanel = ({
   darkMode,
   fullPrompt
 }) => {
+  const [models, setModels] = useState([]);
   const [selectedModel, setSelectedModel] = useState('default'); // 选择的模型
   const [selectedProgram, setSelectedProgram] = useState('ALFworld'); // 选择的程序
   const [manualResponse, setManualResponse] = useState(''); // 手动输入的回复
@@ -110,16 +111,36 @@ const LLMControlPanel = ({
     }
   };
 
-  // 切换模型
-  // 1. 切换模型函数（稳定、不变，无闭包问题）
+  const handleProgramReset = async () => {
+    if (!window.confirm("确定要重置当前程序状态吗？这会清空所有窗口的运行时数据。")) return;
+    
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/program/reset`, {
+        method: 'POST',
+      });
+      if (res.ok) {
+        console.log("✅ 程序重置成功");
+        // 清空当前输出
+        setLlmOutput({});
+      } else {
+        alert('重置程序失败');
+      }
+    } catch (err) {
+      console.error("❌ 重置程序错误:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleModelSwitch = useCallback(async (selectedModel) => {
     if (!selectedModel) return;
 
     try {
-      const res = await fetch(`${API_BASE_URL}/llm/setModel`, {
+      const res = await fetch(`${API_BASE_URL}/model/update`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: selectedModel }),
+        body: JSON.stringify({ modelName: selectedModel }),
       });
 
       if (!res.ok) {
@@ -144,6 +165,23 @@ const LLMControlPanel = ({
       }]);
     }
   },[setHistory]); // ← deps 空数组 OK
+
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/models`);
+        if (res.ok) {
+          const data = await res.json();
+          setModels(data.models || []);
+        } else {
+          console.error("获取模型列表失败");
+        }
+      } catch (err) {
+        console.error("获取模型列表错误:", err);
+      }
+    };
+    fetchModels();
+  }, []);
 
   return (
     <div className="flex flex-col gap-4">
@@ -202,16 +240,13 @@ const LLMControlPanel = ({
                     : 'bg-white text-gray-800 border-gray-300'
                   }
                   focus:outline-none focus:ring-2 focus:ring-blue-500
-                `}
-              >
+                `}>
                 <option value="default">default</option>
-                <option value="deepseek-chat">deepseek-chat</option>
-                <option value="deepseek-reasoner">deepseek-reasoner</option>
-                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                <option value="gpt-4">GPT-4</option>
-                <option value="claude-3-sonnet">Claude 3 Sonnet</option>
-                <option value="claude-3-haiku">Claude 3 Haiku</option>
-                <option value="gemini-pro">Gemini Pro</option>
+                {models.map((model) => (
+                  <option key={model} value={model}>
+                    {model}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -231,24 +266,43 @@ const LLMControlPanel = ({
               <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 模型调用
               </label>
-              <button
-                onClick={handleLLMCall}
-                disabled={loading}
-                className={`
-                  w-full px-6 py-3 rounded-lg font-medium text-white
-                  ${loading ? 'bg-gray-500' : 'bg-blue-600 hover:bg-blue-700'} 
-                  transition-colors duration-200 flex items-center justify-center
-                `}
-              >
-                {loading ? (
-                  <>
-                    <span className="animate-spin h-5 w-5 mr-2 border-t-2 border-b-2 border-white rounded-full"></span>
-                    处理中...
-                  </>
-                ) : (
-                  <>🚀 调用大模型</>
-                )}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleLLMCall}
+                  disabled={loading}
+                  className={`
+                    flex-1 px-4 py-3 rounded-lg font-medium text-white shadow-md
+                    ${loading ? 'bg-gray-500' : 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600'} 
+                    transition-all duration-300 transform active:scale-95 flex items-center justify-center
+                  `}
+                >
+                  {loading ? (
+                    <>
+                      <span className="animate-spin h-5 w-5 mr-2 border-t-2 border-b-2 border-white rounded-full"></span>
+                      处理中...
+                    </>
+                  ) : (
+                    <>🚀 调用大模型</>
+                  )}
+                </button>
+                
+                <button
+                  onClick={handleProgramReset}
+                  disabled={loading}
+                  title="重置当前程序状态"
+                  className={`
+                    px-4 py-3 rounded-lg font-medium shadow-md transition-all duration-300 transform active:scale-95
+                    ${darkMode 
+                      ? 'bg-gray-700 text-gray-200 hover:bg-gray-600 border border-gray-600' 
+                      : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'}
+                    ${loading ? 'opacity-50 cursor-not-allowed' : ''}
+                  `}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
 

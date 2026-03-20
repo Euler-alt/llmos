@@ -1,6 +1,7 @@
 import CodeMirror from "@uiw/react-codemirror";
 import {json} from "@codemirror/lang-json";
 import {markdown} from "@codemirror/lang-markdown";
+import { EditorView } from "@codemirror/view";
 import React, {useEffect, useRef, useState} from "react";
 
 // 通用头部组件 (WindowHeader)
@@ -193,6 +194,7 @@ export const TextBox = ({
                 extensions={[
                     json(),
                     markdown(),
+                    EditorView.lineWrapping,
                 ]}
                 onChange={(v) => onChange({target: {value: v}})}
             />

@@ -10,16 +10,19 @@ Meta_file = Meta_dir / 'user_instruction.json'
 
 class ChatWindow(BasePromptWindow):
     def __init__(self, code_file=None, window_title="ChatWindow"):
-        super().__init__(window_title=window_title)
         default_path = Meta_file
         self.code_file = code_file if code_file else default_path
-        with open(self.code_file, 'r') as f:
-            self.meta_data = json.load(f)
+        super().__init__(window_title=window_title, meta_file=self.code_file)
         self.prompt = ''
         self.messages = []  # 历史对话记录 [{role: 'user'/'assistant', text: str}]
 
-    def export_meta_prompt(self):
-        return json.dumps(self.meta_data, indent=2, ensure_ascii=False)
+    def reset(self):
+        """清空对话历史"""
+        self.messages = []
+        self.prompt = ''
+        print(f"Chat Window Reset.")
+
+    # export_meta_prompt 已经由基类实现
 
     def get_tool_definitions(self) -> List[ToolDefinition]:
         return []

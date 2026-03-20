@@ -19,15 +19,10 @@ class StackFrame:
 class StackPromptWindow(BasePromptWindow):
 
     def __init__(self, window_title='Stack'):
-        super().__init__(window_title=window_title)
-        self.file_path = META_FILE
-        with open(self.file_path, 'r') as f:
-            self.meta_data = json.load(f)
+        super().__init__(window_title=window_title, meta_file=META_FILE)
         self.stack: List[StackFrame] = []
 
-    def export_meta_prompt(self):
-        """栈描述部分"""
-        return json.dumps(self.meta_data, indent=2, ensure_ascii=False)
+    # export_meta_prompt 已经由基类实现
 
     def export_state_prompt(self):
         """栈帧数据部分"""

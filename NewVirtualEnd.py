@@ -12,6 +12,9 @@ from llmos_core.Program.ALFworldProgram import ALFworldProgram
 from llmos_core.Program.chatProgram import ChatProgram
 from llmos_core.ui import WindowConfig
 from llmos_core.ui.uitranform import update_backend_state_from_program
+from llmos_core.config_manager import ConfigManager
+from llmos_core.schema import ToolCallResult
+from pathlib import Path
 
 app = FastAPI()
 
@@ -63,6 +66,59 @@ PROGRAM_CLASSES = {
 class ProgramSetRequest(BaseModel):
     program_name: str
 
+class UpdateModel(BaseModel):
+    modelName: str
+
+class EventCallRequest(BaseModel):
+    args: str
+    kwargs: Dict[str, Any]
+
+
+@app.get("/api/models")
+async def get_models():
+    """获取可用的大模型列表"""
+    try:
+        # 配置文件通常在 llmos_core/llmos_util/api_configure/api_config.yaml
+        base_dir = Path(__file__).parent
+        api_config_path = base_dir / 'llmos_core' / 'llmos_util' / 'api_configure'
+        print(f"Debug: base_dir={base_dir}, api_config_path={api_config_path}")
+        
+        config_manager = ConfigManager(api_config_path)
+        # 检查文件是否存在
+        config_file = api_config_path / "api_config.yaml"
+        print(f"Debug: checking if {config_file} exists: {config_file.exists()}")
+        
+        if not config_file.exists():
+             # 尝试相对于当前工作目录查找
+             api_config_path = Path('llmos_core/llmos_util/api_configure')
+             print(f"Debug: retrying with relative path: {api_config_path.absolute()}")
+             config_manager = ConfigManager(api_config_path)
+             
+        api_configs = config_manager.load_yaml_config("api_config.yaml")
+        print(f"Debug: Loaded configs keys: {list(api_configs.keys())}")
+        
+        # 提取模型名称，排除 'default'
+        model_names = [name for name in api_configs.keys() if name != 'default']
+        return {"models": model_names}
+    except Exception as e:
+        print(f"Error loading models: {e}")
+        import traceback
+        traceback.print_exc()
+        return JSONResponse(content={"message": f"Error loading models: {str(e)}"}, status_code=500)
+
+
+@app.post("/api/model/update")
+async def update_model(update_data: UpdateModel):
+    """切换当前程序的大模型"""
+    global program
+    if not program:
+        return JSONResponse(content={"message": "No active program"}, status_code=400)
+    
+    # 直接调用 BaseProgram 定义的 set_model 方法，不使用 hasattr
+    program.set_model(update_data.modelName)
+    return {"message": f"Model updated to {update_data.modelName} successfully"}
+
+
 @app.post("/api/program/set")
 async def set_program(request: ProgramSetRequest):
     global program
@@ -74,6 +130,36 @@ async def set_program(request: ProgramSetRequest):
     update_backend_state_from_program(program)
     await backend_state.broadcast_update()
     return {"message": f"Program set to {request.program_name}"}
+
+@app.post("/api/program/reset")
+async def reset_program():
+    global program
+    if program:
+        program.reset()
+        update_backend_state_from_program(program)
+        await backend_state.broadcast_update()
+        return {"message": "Program reset successfully"}
+    return JSONResponse(content={"message": "No active program"}, status_code=400)
+
+@app.post("/api/windows/event_call")
+async def handle_event_call(request: EventCallRequest):
+    """处理前端窗口触发的事件（如 ChatWindow 发送消息）"""
+    global program
+    if not program:
+        return JSONResponse(content={"message": "No active program"}, status_code=400)
+    
+    try:
+        # 调用程序的 env_event
+        program.env_event(request.args, **request.kwargs)
+        
+        # 同步更新 UI 并广播
+        backend_state.update_windowConfig()
+        await backend_state.broadcast_update()
+        
+        return {"message": f"Event {request.args} handled successfully"}
+    except Exception as e:
+        print(f"Error handling event {request.args}: {e}")
+        return JSONResponse(content={"message": f"Error: {str(e)}"}, status_code=500)
 
 
 # 用于存储 SSE 客户端队列
@@ -138,16 +224,7 @@ async def call_llm(data: LLMCallRequest):
     await backend_state.broadcast_update()
     
     # 💡 提取第一个行动记录的摘要作为简短回答，如果没有则显示执行成功
-    answer = "执行成功"
-    if result.parsed_calls and len(result.parsed_calls) > 0:
-        first_call = result.parsed_calls[0]
-        # 如果是 ToolCallResult 对象或字典
-        if hasattr(first_call, 'summary'):
-            answer = first_call.summary
-        elif isinstance(first_call, dict) and 'summary' in first_call:
-            answer = first_call['summary']
-        elif isinstance(first_call, dict) and 'result' in first_call:
-            answer = str(first_call['result'])
+    answer = result.get_first_summary()
 
     print(f"Finish a call. Result summary: {answer[:30]}...")
     
@@ -163,7 +240,33 @@ class LLMConfig(BaseModel):
 @app.post("/api/llm/config")
 async def config_llm(config: LLMConfig):
     backend_state.use_cache = config.use_cache
-    return {"message": f"Cache usage set to {backend_state.use_cache}"}
+    return {
+        "message": f"Cache usage set to {backend_state.use_cache}"}
+
+class ModelSetRequest(BaseModel):
+    model: str
+
+@app.post("/api/llm/setModel")
+async def set_model(request: ModelSetRequest):
+    global program
+    if program and hasattr(program, 'llm_client') and program.llm_client:
+        try:
+            program.llm_client.set_model(request.model)
+            return {"message": f"Model set to {request.model}"}
+        except Exception as e:
+            return JSONResponse(content={"message": f"Failed to set model: {e}"}, status_code=500)
+    return JSONResponse(content={"message": "No active program or LLM client"}, status_code=400)
+
+@app.get("/api/llm/getModels")
+async def get_models():
+    global program
+    if program and hasattr(program, 'llm_client') and program.llm_client:
+        try:
+            models = program.llm_client.get_available_models()
+            return {"models": models}
+        except Exception as e:
+            return JSONResponse(content={"message": f"Failed to get models: {e}"}, status_code=500)
+    return JSONResponse(content={"message": "No active program or LLM client"}, status_code=400)
 
 @app.get("/")
 async def root():

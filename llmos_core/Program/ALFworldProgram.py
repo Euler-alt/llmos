@@ -18,8 +18,8 @@ class ALFworldProgram(BaseProgram):
         chat_window = PromptWindow.from_name(PromptWindow.ChatPromptWindow)
         kernel_window = PromptWindow.from_name(PromptWindow.KernelPromptWindow)
         self.promptMainBoard.register_windows(
-            user_windows=[code_window, heap_window, stack_window, alfworld_window, chat_window],
-            system_windows=kernel_window
+            user_windows=[heap_window, stack_window, alfworld_window, chat_window],
+            system_windows=[kernel_window,code_window]
         )
 
     def run(self, use_cache=False) -> ProgramRunResult:

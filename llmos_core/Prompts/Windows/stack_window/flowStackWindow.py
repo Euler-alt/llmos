@@ -9,7 +9,7 @@ from llmos_core.schema import ToolDefinition
 META_DIR = Path(__file__).parent
 META_FILE = META_DIR / 'flowStack_description.json'
 
-RECORD_STEP = 10
+RECORD_STEP = 50
 # =========================================================
 # 🧱 FrameLogger：封装执行历史记录
 # =========================================================
@@ -63,11 +63,11 @@ class Frame:
         lines = [f"Function {self.name}: {self.description}"]
         if self.variables:
             lines.append(f"Variables: {self.variables}")
-        if self.instruction:
-            lines.append(f"-> INSTRUCTION: {self.instruction}")
         if len(self.logger):
             lines.append("[Execution History]")
             lines.append(self.logger.render_recent(RECORD_STEP))
+        if self.instruction:
+            lines.append(f"-> INSTRUCTION: {self.instruction}")
         if self.fail_reason:
             lines.append(f"[Fail reason: {self.fail_reason}]")
         return "\n".join(lines)
@@ -84,10 +84,8 @@ from .stack_window import StackPromptWindow
 class FlowStackPromptWindow(StackPromptWindow):
 
     def __init__(self, window_title='FlowStackWindow'):
-        super().__init__(window_title=window_title)
-        self.file_path = META_FILE
-        with open(self.file_path, 'r') as f:
-            self.meta_data = json.load(f)
+        # 💡 基类构造函数
+        BasePromptWindow.__init__(self, window_title=window_title, meta_file=META_FILE)
         self.stack: List[Frame] = []
         self._init_root_frame()
 
@@ -165,6 +163,12 @@ class FlowStackPromptWindow(StackPromptWindow):
             "instruction": instruction,
             "__summary__": f"Set instruction for '{self.stack[-1].name}': {instruction}"
         }
+
+    def reset(self):
+        """重置栈，保留根帧"""
+        self.stack.clear()
+        self._init_root_frame()
+        print(f"FlowStack Window Reset.")
 
     def export_handlers(self):
         handlers = super().export_handlers()

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 
 const PromptDisplay = ({ prompt, darkMode }) => {
   const [isCopied, setIsCopied] = useState(false);
+  const [isScrollActive, setIsScrollActive] = useState(false);
   
   const handleCopy = () => {
     navigator.clipboard.writeText(prompt).then(() => {
@@ -56,15 +57,30 @@ const PromptDisplay = ({ prompt, darkMode }) => {
         </button>
       </div>
       
-      <div className={`p-4 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-        <div className={`
-          rounded border p-4 max-h-96 overflow-y-auto font-mono text-sm
-          ${darkMode 
-            ? 'bg-gray-900 border-gray-700 text-gray-300' 
-            : 'bg-gray-50 border-gray-200 text-gray-800'
-          }
-        `}>
-          <pre className="whitespace-pre-wrap">{prompt || '暂无提示词数据'}</pre>
+      <div className={`p-4 ${darkMode ? 'bg-gray-800' : 'bg-white'} relative`}>
+        <div 
+          className={`
+            rounded border p-4 max-h-96 font-mono text-sm relative group
+            ${darkMode 
+              ? 'bg-gray-900 border-gray-700 text-gray-300' 
+              : 'bg-gray-50 border-gray-200 text-gray-800'
+            }
+            ${isScrollActive ? 'overflow-y-auto' : 'overflow-y-hidden cursor-pointer'}
+          `}
+          onClick={() => setIsScrollActive(true)}
+          onMouseLeave={() => setIsScrollActive(false)}
+        >
+          {!isScrollActive && (
+            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-5 flex items-center justify-center transition-all duration-300">
+              <div className={`
+                px-4 py-2 rounded-full text-xs font-medium shadow-sm opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300
+                ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-white text-gray-600'}
+              `}>
+                点击此处启用滚动查看全部
+              </div>
+            </div>
+          )}
+          <pre className="whitespace-pre-wrap break-all">{prompt || '暂无提示词数据'}</pre>
         </div>
         
         <div className="mt-3 flex justify-between text-sm">

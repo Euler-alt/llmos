@@ -9,13 +9,15 @@ Meta_file = Meta_dir / "think_description.json"
 
 class ThinkWindow(BasePromptWindow):
     def __init__(self, window_title='think_window'):
-        super().__init__(window_title=window_title)
-        with open(Meta_file) as f:
-            self.meta_data = json.load(f)
+        super().__init__(window_title=window_title, meta_file=Meta_file)
         self.think_content = None
 
-    def export_meta_prompt(self) -> str:
-        return json.dumps(self.meta_data, indent=2, ensure_ascii=False)
+    def reset(self):
+        """清空思考内容"""
+        self.think_content = None
+        print(f"Think Window Reset.")
+
+    # export_meta_prompt 已经由基类实现
 
     def get_tool_definitions(self) -> List[ToolDefinition]:
         return []

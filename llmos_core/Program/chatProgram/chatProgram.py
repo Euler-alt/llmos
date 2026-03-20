@@ -94,25 +94,5 @@ class ChatProgram(BaseProgram):
     def apply_response(self, response):
         return self.promptMainBoard.apply_response(response)
 
-    def env_event(self, args, **kwargs):
-        """
-        处理环境触发事件，例如：
-        env_event(["move"], direction="north", speed=2)
-        """
-
-        func_name = args
-
-        # 构造一个统一格式的事件调用描述
-        call = {
-            "call_type": "event_call",
-            "func_name": func_name,
-            "kwargs": kwargs  # ← 不要展开，直接放进去
-        }
-
-        # 让主控模块处理调用
-        self.promptMainBoard.handle_call(call)
-
-        return call
-
     def get_prompt_divided_snapshot(self):
         return self.promptMainBoard.get_divided_snapshot()

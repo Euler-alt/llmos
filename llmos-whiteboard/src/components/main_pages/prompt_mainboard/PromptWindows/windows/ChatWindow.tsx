@@ -163,7 +163,7 @@ const ChatWindow = ({ data, windowConfig,darkMode }:WindowProps) => {
                     ref={metaTextareaRef}
                     className={`
                       w-full p-2 rounded border-none font-mono text-sm resize-none
-                      focus:outline-none h-auto
+                      focus:outline-none h-auto break-all
                       ${darkMode 
                         ? 'bg-gray-700 text-gray-200' 
                         : 'bg-white text-gray-800'
@@ -191,7 +191,7 @@ const ChatWindow = ({ data, windowConfig,darkMode }:WindowProps) => {
                     ref={stateTextareaRef}
                     className={`
                       w-full p-2 rounded border-none font-mono text-sm resize-none
-                      focus:outline-none h-auto
+                      focus:outline-none h-auto break-all
                       ${darkMode 
                         ? 'bg-gray-700 text-gray-200' 
                         : 'bg-white text-gray-800'

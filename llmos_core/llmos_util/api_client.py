@@ -103,3 +103,6 @@ class LLMClient:
 
         response = await self.client.chat.completions.create(**kwargs)
         return response.choices[0].message
+
+    def get_available_models(self):
+        return self.api_configs.keys() or []

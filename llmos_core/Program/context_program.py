@@ -1,3 +1,4 @@
+from llmos_core.Program import BaseProgram
 from llmos_core.Prompts.PromptMainBoard import PromptMainBoard, parse_response
 from llmos_core.llmos_util.api_client import LLMClient
 from llmos_core.Prompts.Windows import PromptWindow
@@ -16,8 +17,9 @@ def load_cache_result(result_path=None) -> str:
     return result.get("result")
 
 
-class ContextProgram:
+class ContextProgram(BaseProgram):
     def __init__(self, code_file=None):
+        super().__init__()
         self.promptMainBoard = PromptMainBoard()
         kernelPromptWindow = PromptWindow.from_name(PromptWindow.KernelPromptWindow)
         codePromptWindow = PromptWindow.from_name(PromptWindow.StackPromptWindow)

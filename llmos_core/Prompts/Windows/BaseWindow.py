@@ -1,5 +1,7 @@
+import json
+import os
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Callable
+from typing import List, Dict, Any, Callable, Union
 from llmos_core.schema import WindowSnapshot, ToolDefinition
 
 
@@ -10,19 +12,57 @@ class BasePromptWindow(ABC):
     所有提示词窗口（模块）的抽象基类。
 
     ✅ 每个窗口负责维护自身的提示词片段，以及内部状态。
-    ✅ 支持将自身注册到一个全局注册表（registered_windows），便于通过名称创建实例。
     ✅ 提供 forward() 来序列化本模块的最终提示词文本。
     ✅ 提供 handler 分发机制，使模型的 function call 能调用该模块的能力。
     """
 
-    def __init__(self, window_title=""):
+    def __init__(self, window_title="", meta_file=None):
         """
         :param window_title: 窗口标题，对应前端展示的名称
+        :param meta_file: 可选的文件路径，用于加载元数据（META）
         """
         self.handlers: Dict[str, Callable] = {}  # 各模块暴露给 LLM 的处理方法，例如 function call 的入口
         if window_title is None or window_title == "":
             window_title = "undefined_window"
         self.window_title = window_title
+        
+        # 🚀 新增：如果提供了 meta_file，则加载它
+        self.meta_file = meta_file
+        self.meta_data = None
+        if self.meta_file:
+            self.meta_data = self.load_meta_from_file(self.meta_file)
+
+    def load_meta_from_file(self, file_path: Union[str, os.PathLike]) -> Union[str, Dict, List]:
+        """
+        从文件中加载元数据（META）。
+        支持 .json, .yaml, .yml 格式解析，其余格式按纯文本读取。
+
+        :param file_path: 文件路径
+        :return: 解析后的数据（字典/列表）或纯文本字符串
+        """
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"Meta file not found: {file_path}")
+
+        _, ext = os.path.splitext(file_path)
+        ext = ext.lower()
+
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                if ext == '.json':
+                    return json.load(f)
+                elif ext in ['.yaml', '.yml']:
+                    try:
+                        import yaml
+                        return yaml.safe_load(f)
+                    except ImportError:
+                        # 如果没有安装 yaml，降级为文本读取并给出警告
+                        print("Warning: PyYAML not installed, reading .yaml as plain text.")
+                        f.seek(0)
+                        return f.read()
+                else:
+                    return f.read()
+        except Exception as e:
+            raise RuntimeError(f"Error loading meta from {file_path}: {e}")
 
     def forward(self, *args, **kwargs) -> str:
         """
@@ -70,9 +110,12 @@ class BasePromptWindow(ABC):
     def export_meta_prompt(self) -> str:
         """
         返回模块的“元提示词”部分，用于描述模块目的、功能、使用规范等。
-        对于内部调用（JSON Syscall），函数定义应在此处说明。
-        可以为空；子类可覆盖。
+        如果 self.meta_data 有值，则返回其字符串表示。
         """
+        if self.meta_data is not None:
+            if isinstance(self.meta_data, (dict, list)):
+                return json.dumps(self.meta_data, indent=2, ensure_ascii=False)
+            return str(self.meta_data)
         return ""
 
     def export_state_prompt(self) -> str:
@@ -97,7 +140,7 @@ class BasePromptWindow(ABC):
         """
         # 将 tool definitions 格式化为 meta 描述
         tools = self.get_tool_definitions()
-        meta_desc = "\n".join([f"- {t.name}: {t.description}" for t in tools]) if tools else self.export_meta_prompt()
+        meta_desc = self.export_meta_prompt()
         return WindowSnapshot(
             meta=meta_desc,
             state=self.export_state_prompt(),

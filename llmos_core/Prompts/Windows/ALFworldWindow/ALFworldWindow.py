@@ -5,53 +5,57 @@ from llmos_core.schema import ToolDefinition
 from alfworld.agents.environment import get_environment
 import yaml
 import os
-import traceback  # 引入 traceback 模块用于更详细的错误报告
+import traceback
 from pathlib import Path
-# 假设 ALFWORLD_DATA_ROOT 已经设置好
+from collections import deque
+
 ALFWORLD_DATA_ROOT = "/root/PycharmProjects/alfworld/data"
 os.environ['ALFWORLD_DATA'] = ALFWORLD_DATA_ROOT
 
 META_DIR = Path(__file__).parent
 META_FILE = META_DIR / 'alfworld_description.json'
 
+# 最多保留最近 N 步的历史（防止 prompt 无限增长）
+OBS_HISTORY_MAXLEN = 10
+
 
 class ALFworldWindow(BasePromptWindow):
     def __init__(self, window_title='ALFWorld'):
-        super().__init__(window_title=window_title)
+        super().__init__(window_title=window_title, meta_file=META_FILE)
 
-        # 0.加载meta配置
-        with open(META_FILE, 'r') as f:
-            self.meta_data = json.load(f)
-
-        # 1. 加载配置
+        # 加载配置
         config_path = os.path.join("/root/PycharmProjects/alfworld/configs", "base_config.yaml")
         try:
             with open(config_path, 'r') as f:
                 self.config = yaml.safe_load(f)
         except Exception as e:
             print(f"Error loading config file: {e}")
-            self.config = {}  # 使用空配置作为回退
+            self.config = {}
 
-        # 2. 初始化环境
+        # 初始化环境
         EnvClass = get_environment('AlfredTWEnv')
         uninitialized_env = EnvClass(self.config, train_eval='train')
         self.env = uninitialized_env.init_env(batch_size=1)
 
-        # 3. 首次重置环境
-        self.obs, self.info = self.env.reset()
+        # 首次重置
+        obs_batch, self.info = self.env.reset()
+        self.obs = obs_batch[0] if isinstance(obs_batch, (list, tuple)) else obs_batch
 
-        # 4. 初始化状态变量
+        # 状态变量
         self.admissible_cmds = self.info.get("admissible_commands", [])
         self.last_action = None
         self.last_reward = 0
         self.done = False
 
+        # 观察历史：每条记录为 (action, obs, reward)
+        # action=None 表示初始观察
+        self._obs_history: deque = deque(maxlen=OBS_HISTORY_MAXLEN)
+        self._obs_history.append((None, self.obs, 0))
+
     def export_meta_prompt(self) -> str:
-        """ALFWorld 窗口不提供内部调用，仅提供外部工具。"""
-        return ""
+        return super().export_meta_prompt()
 
     def get_tool_definitions(self) -> List[ToolDefinition]:
-        """从 JSON 配置中解析工具定义"""
         tools = []
         for func in self.meta_data.get("functions", []):
             properties = {}
@@ -59,7 +63,6 @@ class ALFworldWindow(BasePromptWindow):
             for param_name, param_desc in func.get("parameters", {}).items():
                 properties[param_name] = {"type": "string", "description": param_desc}
                 required.append(param_name)
-            
             tools.append(ToolDefinition(
                 name=func["name"],
                 description=func["description"],
@@ -72,129 +75,106 @@ class ALFworldWindow(BasePromptWindow):
         return tools
 
     def forward(self, *args, **kwargs):
-        """主入口，仅返回 State Prompt。"""
         return super().forward()
 
-    def export_meta_prompt(self) -> str:
-        """[已弃用]"""
-        return ""
+    def _render_obs_history(self) -> str:
+        """将观察历史渲染为易读的累加格式。"""
+        lines = []
+        for i, (action, obs, reward) in enumerate(self._obs_history):
+            clean_obs = obs.strip().replace('\n', ' ')
+            if i == 0 and action is None:
+                # 初始观察
+                lines.append(f"  [INIT] {clean_obs}")
+            else:
+                reward_tag = f"+{reward:.2f}" if reward > 0 else f"{reward:.2f}"
+                lines.append(f"  [Step {i}] Action: {action}")
+                lines.append(f"           Obs:    {clean_obs}  (reward: {reward_tag})")
+        return "\n".join(lines)
 
     def export_state_prompt(self) -> str:
-        """将当前环境状态格式化为 Prompt 文本。"""
-        # 确保在出错时也能安全访问 info
-        self.admissible_cmds = self.info.get("admissible_commands", [])
-        task_desc = self.info.get("task_desc", "Unknown task")
-        inventory = self.info.get("inv_objs", [])
-        progress = self.info.get("goal_progress", None)
-        won = self.info.get("won", False)
-        failed = self.info.get("failed", False)
+        cmds = self.info.get("admissible_commands")[0]
+        self.admissible_cmds = cmds
+        won = self.info.get("won")[0]
+        status_line = f"Status: {'WON' if won else  'IN PROGRESS'}\n"
+        
+        return f"""
+{status_line}
+### RECENT OBSERVATION HISTORY ###
+{self._render_obs_history()}
 
-        # 检查 progress 是否为 None，避免格式化错误
-        progress_line = f"Goal Progress: {progress:.2f}\n" if progress is not None else ""
-
-        # 检查是否有错误发生，并加入到状态报告中
-        error_status = ""
-        if self.info.get("error", False):
-            error_status = f"CRITICAL ERROR OCCURRED: {self.info.get('error_type', 'Unknown')}\n"
-
-        return (
-            "[ENV STATE]\n"
-            f"{error_status}"
-            f"Task: {task_desc}\n"
-            f"Observation: {self.obs}\n"
-            f"Inventory: {inventory}\n"
-            f"Available Actions: {self.admissible_cmds}\n"
-            f"Last Action: {self.last_action}\n"
-            f"Last Reward: {self.last_reward}\n"
-            f"Done: {self.done}, Won: {won}, Failed: {failed}\n"
-            f"{progress_line}"
-            "[ACTION GUIDE] The Observation above is your current environment feedback. If it contains '[CRITICAL TOOL ERROR]', you must read the error and correct your next ALF_step call.\n"
-            "[END STATE]\n"
-        )
+### ADMISSIBLE COMMANDS ###
+{", ".join(self.admissible_cmds)}
+"""
 
     def step(self, action):
-        """
-        执行 ALFWorld 环境中的一个动作。
-
-        已修复两个问题：
-        1. 确保 action 被封装成列表 (batch_size=1 的环境要求)。
-        2. 添加 try-except 块以捕获错误，并将错误信息作为新的 Observation 返回给 LLM。
-        """
         self.last_action = action
         try:
-            # FIX 1: TextWorld Batch Env requires a list of commands, even for batch_size=1.
-            # FIX 2: Correctly unpacks the batch returns (obs_batch, reward_batch, ...)
             obs_batch, reward_batch, done_batch, info_batch = self.env.step([action])
 
-            # Unpack the single item from the batch
             self.obs = obs_batch[0]
             self.last_reward = reward_batch[0]
             self.done = done_batch[0]
 
-            # FIX 2 UPDATE: Addressing KeyError: 0 on info_batch.
-            # This suggests info_batch is the dictionary itself, not a list of dictionaries.
-            # We assign it directly.
             if isinstance(info_batch, (list, tuple)) and len(info_batch) > 0 and isinstance(info_batch[0], dict):
-                # 优先按列表处理 (最标准的做法)
                 self.info = info_batch[0]
             elif isinstance(info_batch, dict):
-                # 如果它直接就是字典 (您的错误指向的情况)
                 self.info = info_batch
             else:
-                # 捕获意外格式
                 raise TypeError(f"Unexpected info batch format: {type(info_batch)}")
 
-            self.info["error"] = False  # 标记成功执行
+            self.info["error"] = False
+
+            # 成功执行，追加历史
+            self._obs_history.append((action, self.obs, self.last_reward))
 
         except AssertionError as e:
-            # 捕获因输入格式错误（如非 list）导致的断言错误
-            error_msg = f"Assertion Error: The environment execution failed due to incorrect input format. Details: {e}"
-            self.obs = f"[CRITICAL TOOL ERROR] {error_msg}. LLM must re-evaluate the action format. Last Attempted Action: '{action}'"
-            self.last_reward = -0.05  # 可以给一个轻微惩罚
+            error_msg = f"Assertion Error: incorrect input format. Details: {e}"
+            self.obs = f"[CRITICAL TOOL ERROR] {error_msg}. Last Attempted Action: '{action}'"
+            self.last_reward = -0.05
             self.done = False
             self.info = {"error": True, "error_type": "AssertionError", "original_action": action,
                          "admissible_commands": []}
-            print(f"Assertion Error during ALF_step: {traceback.format_exc()}")
+            self._obs_history.append((action, self.obs, self.last_reward))
+            print(f"Assertion Error during ALF:step: {traceback.format_exc()}")
 
         except Exception as e:
-            # 捕获其他运行时错误（如环境内部错误、无效的命令字符串等）
-            error_msg = f"Environment Execution Error: Details: {e}"
-            self.obs = f"[CRITICAL TOOL ERROR] {error_msg}. LLM must review the 'Available Actions' and try again. Last Attempted Action: '{action}'"
-            self.last_reward = -0.1  # 可以给一个惩罚
+            error_msg = f"Environment Execution Error: {e}"
+            self.obs = f"[CRITICAL TOOL ERROR] {error_msg}. Review 'Available Actions' and try again. Last Attempted Action: '{action}'"
+            self.last_reward = -0.1
             self.done = False
             self.info = {"error": True, "error_type": "GenericError", "original_action": action,
                          "admissible_commands": []}
-            print(f"Generic Error during ALF_step: {traceback.format_exc()}")
+            self._obs_history.append((action, self.obs, self.last_reward))
+            print(f"Generic Error during ALF:step: {traceback.format_exc()}")
 
         if self.info.get("error"):
-            # 如果出错了，摘要直接显示错误核心
             summary = f"❌ 动作执行失败: {self.obs}"
         else:
-            # 成功执行时，摘要 = 动作 + 真实的观察结果
-            # 限制长度防止栈窗口过载，但要保留核心语义
             clean_obs = self.obs.strip().replace('\n', ' ')
             if len(clean_obs) > 150:
                 clean_obs = clean_obs[:147] + "..."
-
             summary = f"执行动作 '{action}' -> 观察到: {clean_obs}"
 
         return {
             'execute_action': action,
             'reward': self.last_reward,
             'done': self.done,
-            # 这个字段会被你的 LogEvent 捕获并渲染到栈窗口
             '__summary__': summary
         }
 
     def reset(self):
-        """重置环境并清除状态。"""
-        self.obs, self.info = self.env.reset()
-        self.last_action, self.last_reward, self.done = None, 0, False
-        self.info["error"] = False
-        return self.obs
+        """重置 ALFWorld 环境和内部状态"""
+        obs_batch, self.info = self.env.reset()
+        self.obs = obs_batch[0] if isinstance(obs_batch, (list, tuple)) else obs_batch
+        self.admissible_cmds = self.info.get("admissible_commands", [])
+        self.last_action = None
+        self.last_reward = 0
+        self.done = False
+        self._obs_history.clear()
+        self._obs_history.append((None, self.obs, 0))
+        print(f"ALFWorld Environment Reset.")
 
     def export_handlers(self):
-        """暴露给大模型调用的 API 接口。"""
         return {
             "ALF_step": self.step,
             "ALF_reset": self.reset

@@ -11,85 +11,39 @@
         "description": "string (required, 子任务目标描述，解释该任务要达到的明确目标)",
         "variables": "dict (optional, 局部状态和参数)",
         "ret_key": "string (optional, 子任务完成后写入父帧 variables 的键名)",
-        "instruction": "string (required, 定义第一步要执行的具体动作或计划)"
-      },
-      "return": {
-        "success": {"status": "ok", "stack_size": "N", "step": 1},
-        "error": {"status": "error", "reason": "missing required fields"}
+        "instruction": "string (required, 第一步要执行的具体动作)"
       }
     },
     {
       "name": "stack_pop",
-      "description": "结束当前子任务并弹出栈帧。若提供 result，将自动写入父帧.variables[ret_key]。",
+      "description": "结束当前子任务并弹出栈帧。若提供 result，将自动写入父帧.variables[ret_key]。禁止对 ROOT 帧调用。",
       "parameters": {
         "result": "any (optional, 任务的返回结果)"
-      },
-      "return": {
-        "success": {"status": "ok", "message": "result written to parent", "stack_size": "N"},
-        "error": {"status": "error", "reason": "stack empty"}
       }
     },
     {
       "name": "stack_set_instruction",
-      "description": "更新当前栈帧的下一轮执行指令。系统会自动将当前指令及其结果存入执行历史，用于后续决策参考。",
+      "description": "更新当前栈帧的下一轮执行指令。系统自动将当前指令及其结果存入执行历史供后续决策参考。检测到循环时会返回错误并说明上次结果，此时必须调整策略。",
       "parameters": {
-        "instruction": "string (required, 下一轮要执行的具体动作或计划，必须明确且可执行)"
-      },
-      "return": {
-        "success": {
-          "status": "ok",
-          "new_instruction": "instruction",
-          "step": "N",
-          "stack_size": "N"
-        },
-        "error": {
-          "status": "error",
-          "reason": "检测到循环: 指令 'X' 在步骤 #N 已尝试过，结果为 'Y'。请尝试不同的方法。"
-        }
+        "instruction": "string (required, 下一轮要执行的具体动作，必须明确且可执行)"
       }
     },
     {
       "name": "stack_setvar",
-      "description": "向栈顶帧变量字典写入或更新键值对。",
+      "description": "向栈顶帧变量字典写入或更新键值对。其他窗口（如 ALFWorld）的状态每步都会被覆盖，重要信息（物品位置、已探索区域、关键观察等）应及时用此函数转移到栈帧中长期保存；不再需要时随 stack_pop 自动释放。",
       "parameters": {
         "variables": "dict (required, 要更新的键值对)"
-      },
-      "return": {
-        "success": {"status": "ok", "updated_keys": "list", "stack_size": "N"},
-        "error": {"status": "error", "reason": "invalid variables or no active frame"}
       }
     },
     {
       "name": "stack_replace",
-      "description": "【回溯修正】当发现当前策略完全错误时，重写当前栈帧的描述、变量或指令。这会清空执行历史，相当于重新开始该子任务。",
+      "description": "【回溯修正】当发现当前策略完全错误时，重写当前栈帧的描述、变量或指令。会清空执行历史，相当于重新开始该子任务。",
       "parameters": {
         "description": "string (optional, 新的任务描述)",
         "variables": "dict (optional, 重置的变量)",
         "instruction": "string (optional, 新的起始指令)",
-        "fail_reason": "string (required, 为什么需要回溯？之前的策略哪里出错了？)"
-      },
-      "return": {
-        "success": {"status": "ok", "replaced": "frame_name", "history_cleared": true},
-        "error": {"status": "error", "reason": "no active frame"}
+        "fail_reason": "string (required, 之前的策略哪里出错了？为什么需要回溯？)"
       }
     }
-  ],
-  "forward_format": {
-    "frame_structure": "每个栈帧包含以下信息，在每次调用时完整呈现",
-    "display_format": "Function <frame_name>: <frame_description>\nVariables: <variables-as-json>\n-> INSTRUCTION: <instruction>\n\n[Execution History - 你是如何走到这一步的]\n  Step #N-2: <instruction> → <result>\n             Reasoning: <reason>\n  Step #N-1: <instruction> → <result>\n             Reasoning: <reason>\n  (当前 INSTRUCTION 是基于以上历史做出的下一步决策)\n\n[Tried and Failed - 已知无效的路径]\n  - <instruction>: <result> (步骤 #N)"
-  },
-  "constraints": [
-
-    "**【历史可见性】**: 每次调用时，你都能看到当前栈帧最近3-5步的执行历史，包括每一步的指令、结果和推理。利用这些信息来避免重复失败的路径。",
-    "**【任务推进原则】**: 每一轮执行必须让任务有实质性进展。'进展'可以是：\n  - 获得了新信息\n  - 改变了环境状态\n  - 排除了一个错误方案\n  - 发现了新的可能性\n  如果连续2-3轮都没有新进展，应考虑改变策略（stack_replace）或放弃任务（stack_pop）。",
-    "**【指令表达要求】**: INSTRUCTION 必须是具体的、可执行的动作，例如：\n  ✓ '打开冰箱检查是否有苹果'\n  ✓ '用找到的钥匙尝试开柜子'\n  ✓ '前往卧室搜索抽屉'\n  ✗ '继续寻找' (太模糊)\n  ✗ '保持探索' (无具体动作)\n  ✗ '应该快完成了' (这是总结不是指令)",
-    "**【任务完成判定】**: 当以下任一情况发生时，必须调用 stack_pop：\n  - 任务目标已达成\n  - 已确认无法完成（如所需物品不存在）\n  - 陷入死循环且无新策略\n  不要让任务无限循环下去。",
-    "**【父子任务衔接】**: 子任务通过 stack_pop(result=...) 返回结果后，父任务会收到该结果并继续执行。子任务 pop 后不得再设置 INSTRUCTION。"
-  ],
-  "internal_mechanism": {
-    "note": "以下内容仅用于理解系统工作原理，无需在调用时处理",
-    "auto_history_tracking": "每次调用 stack_set_instruction 时，系统会自动将当前的 instruction、last_result 和 reason 存入 action_history 数组，并更新 step_counter。",
-    "history_display": "只显示最近3-5步的历史，避免 prompt 过长。更早的历史仍然存储，用于循环检测。",
-    "step_counter": "每个栈帧维护独立的步骤计数器，从1开始递增，用于标识每一步在任务中的位置。"
-  }
+  ]
 }

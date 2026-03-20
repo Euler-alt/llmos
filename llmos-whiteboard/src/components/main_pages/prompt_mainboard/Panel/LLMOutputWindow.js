@@ -5,6 +5,7 @@ const LLMOutputWindow = ({ result, darkMode }) => {
   const [activeTab, setActiveTab] = useState('answer');
   const [isCopied, setIsCopied] = useState(false);
   const [isUpdated, setIsUpdated] = useState(false);
+  const [isScrollActive, setIsScrollActive] = useState(false);
 
   useEffect(() => {
     if (!result) return;
@@ -119,78 +120,84 @@ const LLMOutputWindow = ({ result, darkMode }) => {
       </div>
       
       <div className="p-4">
-        {activeTab === 'answer' && (
-          <div className={`
-            rounded border p-4 min-h-[200px] max-h-[500px] overflow-y-auto
+        <div 
+          className={`
+            rounded border p-4 min-h-[200px] max-h-[500px] relative group
             ${darkMode 
               ? 'bg-gray-700 border-gray-600 text-gray-200' 
               : 'bg-gray-50 border-gray-200 text-gray-800'
             }
-          `}>
-            {result?.parsed_calls && result.parsed_calls.length > 0 ? (
-              <div className="space-y-2">
-                {result.parsed_calls.map((call, idx) => (
-                  <ActionRecord key={idx} record={call} index={idx} darkMode={darkMode} />
-                ))}
+            ${isScrollActive ? 'overflow-y-auto' : 'overflow-y-hidden cursor-pointer'}
+          `}
+          onClick={() => setIsScrollActive(true)}
+          onMouseLeave={() => setIsScrollActive(false)}
+        >
+          {!isScrollActive && (
+            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-5 flex items-center justify-center transition-all duration-300 z-10">
+              <div className={`
+                px-4 py-2 rounded-full text-xs font-medium shadow-sm opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300
+                ${darkMode ? 'bg-gray-600 text-gray-300' : 'bg-white text-gray-600'}
+              `}>
+                点击以启用内部滚动
               </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full py-8 text-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className={`h-12 w-12 ${darkMode ? 'text-gray-600' : 'text-gray-300'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-                <p className="mt-4 text-lg">暂无行动记录</p>
-                <p className={`mt-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                  点击"调用大模型"按钮获取执行结果
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-        
-        {activeTab === 'raw' && (
-          <div className={`
-            rounded border p-4 min-h-[200px] max-h-96 overflow-y-auto
-            ${darkMode 
-              ? 'bg-gray-700 border-gray-600 text-gray-200' 
-              : 'bg-gray-50 border-gray-200 text-gray-800'
-            }
-          `}>
-            {result?.raw_response ? (
-              <pre className="font-mono text-sm whitespace-pre-wrap">{result.raw_response}</pre>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full py-8 text-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className={`h-12 w-12 ${darkMode ? 'text-gray-600' : 'text-gray-300'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <p className="mt-4 text-lg">暂无原始输出</p>
-              </div>
-            )}
-          </div>
-        )}
-        
-        {activeTab === 'calls' && (
-          <div className={`
-            rounded border p-4 min-h-[200px] max-h-96 overflow-y-auto
-            ${darkMode 
-              ? 'bg-gray-700 border-gray-600 text-gray-200' 
-              : 'bg-gray-50 border-gray-200 text-gray-800'
-            }
-          `}>
-            {result?.parsed_calls && result.parsed_calls.length > 0 ? (
-              <pre className="font-mono text-sm whitespace-pre-wrap">
-                {JSON.stringify(result.parsed_calls, null, 2)}
-              </pre>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full py-8 text-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className={`h-12 w-12 ${darkMode ? 'text-gray-600' : 'text-gray-300'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <p className="mt-4 text-lg">暂无工具调用信息</p>
-              </div>
-            )}
-          </div>
-        )}
+            </div>
+          )}
+
+          {activeTab === 'answer' && (
+            <>
+              {result?.parsed_calls && result.parsed_calls.length > 0 ? (
+                <div className="space-y-2">
+                  {result.parsed_calls.map((call, idx) => (
+                    <ActionRecord key={idx} record={call} index={idx} darkMode={darkMode} />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full py-8 text-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className={`h-12 w-12 ${darkMode ? 'text-gray-600' : 'text-gray-300'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  <p className="mt-4 text-lg">暂无行动记录</p>
+                  <p className={`mt-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                    点击"调用大模型"按钮获取执行结果
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+          
+          {activeTab === 'raw' && (
+            <>
+              {result?.raw_response ? (
+                <pre className="font-mono text-sm whitespace-pre-wrap break-all">{result.raw_response}</pre>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full py-8 text-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className={`h-12 w-12 ${darkMode ? 'text-gray-600' : 'text-gray-300'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <p className="mt-4 text-lg">暂无原始输出</p>
+                </div>
+              )}
+            </>
+          )}
+          
+          {activeTab === 'calls' && (
+            <>
+              {result?.parsed_calls && result.parsed_calls.length > 0 ? (
+                <pre className="font-mono text-sm whitespace-pre-wrap">
+                  {JSON.stringify(result.parsed_calls, null, 2)}
+                </pre>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full py-8 text-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className={`h-12 w-12 ${darkMode ? 'text-gray-600' : 'text-gray-300'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <p className="mt-4 text-lg">暂无工具调用信息</p>
+                </div>
+              )}
+            </>
+          )}
+        </div>
         
         <div className="mt-3 flex justify-between text-sm">
           <div>

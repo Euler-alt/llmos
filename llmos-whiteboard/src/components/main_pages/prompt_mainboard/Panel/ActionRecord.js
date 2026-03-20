@@ -28,7 +28,7 @@ const ActionRecord = ({ record, index, darkMode }) => {
         </div>
       )}
       
-      <div className={`text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+      <div className={`text-sm font-medium break-words whitespace-pre-wrap ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
         {record.summary || record.result || 'Executed successfully'}
       </div>
       

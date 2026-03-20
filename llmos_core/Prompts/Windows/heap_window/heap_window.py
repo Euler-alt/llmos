@@ -8,12 +8,16 @@ Meta_file = Meta_dir / 'heap_description.json'
 class HeapPromptWindow(BasePromptWindow):
 
     def __init__(self, window_title="Heap"):
-        super().__init__(window_title=window_title)
-        self.file_path = Meta_file
-        with open(self.file_path,'r') as f:
-            self.description = f.read()
+        super().__init__(window_title=window_title, meta_file=Meta_file)
         # 堆的核心数据结构，一个全局字典
         self.data = {}
+
+    def reset(self):
+        """清空堆数据"""
+        self.data.clear()
+        print(f"Heap Window Reset.")
+
+    # export_meta_prompt 已经由基类实现
 
     def export_state_prompt(self):
         heap_data_str = json.dumps(self.data, indent=2, ensure_ascii=False)
@@ -21,9 +25,6 @@ class HeapPromptWindow(BasePromptWindow):
             return f"### HEAP DATA ###\n{heap_data_str}\n"
         else:
             return "### HEAP Empty ###\n"
-
-    def export_meta_prompt(self):
-        return f'{self.description}\n'
 
     def forward(self, context=None):
         """将堆数据序列化成提示词，供 LLM 使用"""
